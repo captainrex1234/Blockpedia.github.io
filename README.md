@@ -1,4 +1,4 @@
-# captainrex1234.github.io
+# Blockpedia.github.io
 The Minecraft blockpedia for you and you friends to use
 
 
