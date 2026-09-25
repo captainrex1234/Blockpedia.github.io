@@ -4,6 +4,7 @@ Explore the wonderful world of Minecraft blocks, come on in!
 
 
 
+
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -217,14 +218,42 @@ function toolName(b){
  return 'Any / special';
 }
 
+function textureCandidates(name){
+ const c=[SOURCES.blockImg+name+'.png'];
+ const add=n=>{if(!c.includes(n))c.push(n)};
+ // Composite/animated blocks often store their actual model textures under a variant name.
+ if(/_door$/.test(name)) add(SOURCES.blockImg+name+'_bottom.png');
+ if(/_bed$/.test(name)) add(SOURCES.blockImg+name+'_foot.png');
+ if(/_sign$/.test(name)) add(SOURCES.blockImg+name+'.png');
+ if(/^fire$/.test(name)) add(SOURCES.blockImg+'fire_0.png');
+ if(/^soul_fire$/.test(name)) add(SOURCES.blockImg+'soul_fire_0.png');
+ if(name==='wheat') add(SOURCES.blockImg+'wheat_stage0.png');
+ if(name==='carrots') add(SOURCES.blockImg+'carrots_stage0.png');
+ if(name==='potatoes') add(SOURCES.blockImg+'potatoes_stage0.png');
+ if(name==='beetroots') add(SOURCES.blockImg+'beetroots_stage0.png');
+ if(name==='nether_wart') add(SOURCES.blockImg+'nether_wart_stage0.png');
+ if(name==='sweet_berry_bush') add(SOURCES.blockImg+'sweet_berry_bush_stage0.png');
+ // Inventory icon is an accurate official-style representation when a direct block texture is absent.
+ add(SOURCES.itemImg+name+'.png');
+ // Final fallback is a model-based render service; it is useful for doors, signs, plants, etc.
+ add('https://blockrender.dev/render/block/'+encodeURIComponent(name)+'.png?size=256');
+ return c;
+}
+
 function picture(name,cls=''){
  const bid='img_'+Math.random().toString(36).slice(2);
- setTimeout(()=>{
-   const img=document.getElementById(bid); if(!img)return;
-   img.onerror=function(){if(this.dataset.fallback!=='1'){this.dataset.fallback='1';this.src=SOURCES.itemImg+name+'.png'}else{this.style.display='none';const e=this.nextElementSibling;if(e)e.style.display='block'}};
-   img.src=SOURCES.blockImg+name+'.png';
- },0);
- return `<img id="${bid}" class="${cls}" alt="${esc(pretty(name))} texture"><div class="emoji" style="display:none">▧</div>`;
+ const candidates=textureCandidates(name);
+ const encoded=encodeURIComponent(JSON.stringify(candidates));
+ return `<img id="${bid}" class="${cls}" alt="${esc(pretty(name))} texture" data-candidates='${encoded}' data-index="0" src="${candidates[0]}" onerror="nextTexture(this)"><div class="emoji" style="display:none">▧</div>`;
+}
+
+function nextTexture(img){
+ let candidates=[];
+ try{candidates=JSON.parse(decodeURIComponent(img.dataset.candidates||''))}catch(e){candidates=[]}
+ const i=Number(img.dataset.index||0)+1;
+ if(i<candidates.length){img.dataset.index=String(i);img.src=candidates[i];return}
+ img.style.display='none';
+ const e=img.nextElementSibling;if(e)e.style.display='block';
 }
 
 const articles=[
@@ -304,7 +333,7 @@ function showBlocks(openName=''){
    <h1>Minecraft Block Encyclopedia</h1>
    <p>Click any block picture or card to open the complete quick-reference entry.</p>
  </section>
- <div class="notice"><b>Images:</b> each card loads its 26.3 block texture, with an item-texture fallback for blocks whose icon is stored separately.</div>
+ <div class="notice"><b>Images:</b> each card uses the 26.3 Minecraft texture assets first, then special block variants, an item icon, and finally a model-render fallback for blocks with unusual shapes.</div>
  <div class="toolbar">
    <select id="filter"><option value="all">Gameplay blocks</option><option value="technical">Include technical/hidden blocks</option></select>
    <select id="sort"><option value="name">A–Z</option><option value="hardness">Hardness</option><option value="id">Registry order</option></select>
