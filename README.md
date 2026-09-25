@@ -5,7 +5,7 @@ Explore the wonderful world of Minecraft blocks, come on in!
 
 
 
-<!Not affiliated with or endorsed by Mojang or Microsoft.>
+
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -431,7 +431,7 @@ async function load(){
  document.querySelectorAll('.side button[data-cat]').forEach(x=>x.classList.remove('active'));
  home();
 }
-
+<p Not affiliated with or endorsed by Mojang or Microsoft. /p>
 load();
 </script>
 </body>
