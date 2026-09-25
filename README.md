@@ -116,7 +116,7 @@ a{color:var(--blue)}
   .wrap > :last-child{margin-top:12px}
 }
 </style>
-</style>
+
 </head>
 <body>
 <header class="top">
