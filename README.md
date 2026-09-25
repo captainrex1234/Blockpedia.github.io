@@ -1,5 +1,5 @@
 # captainrex1234.github.io
-a minecraft blockpedia for you and you friends to use
+The Minecraft blockpedia for you and you friends to use
 
 
 <html lang="en">
