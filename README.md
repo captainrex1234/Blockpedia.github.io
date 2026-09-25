@@ -7,6 +7,7 @@ Not affiliated with or endorsed by Mojang or Microsoft.
 
 
 
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -38,7 +39,7 @@ a{color:var(--blue)}
 }
 .btn:hover,.navbtn:hover{background:var(--green2)}
 .navbtn.secondary{background:#383838}
-.wrap{width:100%;max-width:none;box-sizing:border-box;margin:0;padding:18px 24px;display:grid;grid-template-columns:240px minmax(0,1fr) 400px;gap:24px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.wrap{width:100%;max-width:none;box-sizing:border-box;margin:0;padding:18px clamp(10px,2vw,28px);display:grid;grid-template-columns:220px minmax(0,1fr) 345px;gap:18px}
 .panel{background:var(--panel);border:2px solid var(--line);box-shadow:0 3px 0 #080808}
 .side{padding:14px;height:max-content;position:sticky;top:76px}
 .side h3{font-size:12px;color:#8fd45e;margin:3px 0 8px;letter-spacing:.7px}
@@ -106,7 +107,7 @@ a{color:var(--blue)}
 
 <style>
 @media (min-width: 1600px){
-  .wrap{grid-template-columns:250px minmax(0,1fr) 420px;gap:26px;padding-left:30px;padding-right:30px}
+  .wrap{grid-template-columns:240px minmax(0,1fr) 380px;gap:22px;padding-left:28px;padding-right:28px}
 }
 @media (max-width: 1050px){
   .wrap{grid-template-columns:190px minmax(0,1fr)}
