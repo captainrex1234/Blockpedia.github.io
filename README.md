@@ -1,5 +1,6 @@
 # Blockpedia.github.io
-The Minecraft blockpedia for you and you friends to use
+The only Minecraft Blockpedia you will ever need! 
+Explore the wonderful world of Minecraft blocks, come on in!
 
 
 
