@@ -2,10 +2,9 @@
 The only Minecraft Blockpedia you will ever need! 
 Explore the wonderful world of Minecraft blocks, come on in!
 
-
-
-
 Not affiliated with or endorsed by Mojang or Microsoft.
+
+
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -23,6 +22,7 @@ body{margin:0;background:linear-gradient(#121212,#0b0b0b);color:var(--text);font
 button,input,select{font:inherit}
 a{color:var(--blue)}
 .top{
+ width:100%;
  position:sticky;top:0;z-index:20;display:flex;gap:11px;align-items:center;
  padding:10px 17px;background:#1d1d1d;border-bottom:4px solid #090909;
  box-shadow:0 3px 0 #060606
@@ -36,7 +36,7 @@ a{color:var(--blue)}
 }
 .btn:hover,.navbtn:hover{background:var(--green2)}
 .navbtn.secondary{background:#383838}
-.wrap{width:100%;max-width:none;box-sizing:border-box;margin:0;padding:18px;display:grid;grid-template-columns:220px minmax(0,1fr) 345px;gap:18px}
+.wrap{width:100%;max-width:none;box-sizing:border-box;margin:0;padding:18px clamp(10px,2vw,28px);display:grid;grid-template-columns:220px minmax(0,1fr) 345px;gap:18px}
 .panel{background:var(--panel);border:2px solid var(--line);box-shadow:0 3px 0 #080808}
 .side{padding:14px;height:max-content;position:sticky;top:76px}
 .side h3{font-size:12px;color:#8fd45e;margin:3px 0 8px;letter-spacing:.7px}
@@ -101,6 +101,21 @@ a{color:var(--blue)}
 .footer{max-width:1450px;margin:auto;padding:20px;color:#777;font-size:12px;line-height:1.6}
 @media(max-width:1160px){.wrap{grid-template-columns:205px minmax(0,1fr)}.detail{grid-column:1/-1;position:static}}
 @media(max-width:780px){.wrap{grid-template-columns:1fr}.side{display:none}.top{flex-wrap:wrap}.search{order:3;flex-basis:100%}.status{margin-left:0}.quick{grid-template-columns:1fr}.homeHero h1{font-size:32px}}
+
+<style>
+@media (min-width: 1600px){
+  .wrap{grid-template-columns:240px minmax(0,1fr) 380px;gap:22px;padding-left:28px;padding-right:28px}
+}
+@media (max-width: 1050px){
+  .wrap{grid-template-columns:190px minmax(0,1fr)}
+  .wrap > :last-child{grid-column:1 / -1}
+}
+@media (max-width: 720px){
+  .wrap{display:block;padding:10px}
+  .side{position:static;margin-bottom:12px}
+  .wrap > :last-child{margin-top:12px}
+}
+</style>
 </style>
 </head>
 <body>
