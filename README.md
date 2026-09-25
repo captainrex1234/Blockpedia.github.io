@@ -2,7 +2,7 @@
 The Minecraft blockpedia for you and you friends to use
 
 
-<!doctype html>
+
 <html lang="en">
 <head>
 <meta charset="utf-8">
