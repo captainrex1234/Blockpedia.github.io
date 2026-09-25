@@ -1,7 +1,7 @@
 # captainrex1234.github.io
 a minecraft blockpedia for you and you friends to use
 
-<!doctype html>
+
 <html lang="en">
 <head>
 <meta charset="utf-8">
