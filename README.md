@@ -5,7 +5,7 @@ Explore the wonderful world of Minecraft blocks, come on in!
 Not affiliated with or endorsed by Mojang or Microsoft.
 
 
-<!doctype html>
+
 <html lang="en">
 <head>
 <meta charset="utf-8">
