@@ -10,7 +10,7 @@ Not affiliated with or endorsed by Mojang or Microsoft.
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Blockpedia — Minecraft Block Encyclopedia</title>
-<style>
+
 :root{
  --bg:#0e0e0e;--panel:#202020;--panel2:#292929;--panel3:#353535;
  --green:#55a83d;--green2:#78cf53;--text:#f3f3f3;--muted:#aaa;
