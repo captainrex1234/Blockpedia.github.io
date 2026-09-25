@@ -30,7 +30,7 @@ a{color:var(--blue)}
 }
 .btn:hover,.navbtn:hover{background:var(--green2)}
 .navbtn.secondary{background:#383838}
-.wrap{width:100%;max-width:none;box-sizing:border-box;margin:0;padding:18px 24px;display:grid;grid-template-columns:240px minmax(0,1fr) 400px;gap:24px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.wrap{width:100%;max-width:none;box-sizing:border-box;margin:0;padding:18px clamp(10px,2vw,28px);display:grid;grid-template-columns:220px minmax(0,1fr) 345px;gap:18px}
 .panel{background:var(--panel);border:2px solid var(--line);box-shadow:0 3px 0 #080808}
 .side{padding:14px;height:max-content;position:sticky;top:76px}
 .side h3{font-size:12px;color:#8fd45e;margin:3px 0 8px;letter-spacing:.7px}
@@ -98,7 +98,7 @@ a{color:var(--blue)}
 
 <style>
 @media (min-width: 1600px){
-  .wrap{grid-template-columns:250px minmax(0,1fr) 420px;gap:26px;padding-left:30px;padding-right:30px}
+  .wrap{grid-template-columns:240px minmax(0,1fr) 380px;gap:22px;padding-left:28px;padding-right:28px}
 }
 @media (max-width: 1050px){
   .wrap{grid-template-columns:190px minmax(0,1fr)}
@@ -109,6 +109,11 @@ a{color:var(--blue)}
   .side{position:static;margin-bottom:12px}
   .wrap > :last-child{margin-top:12px}
 }
+
+.dungeonsLogo{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;line-height:.9;filter:drop-shadow(0 3px 2px rgba(0,0,0,.45));font-weight:900;letter-spacing:-1px}
+.dlMinecraft{font-size:clamp(14px,2.2vw,25px);color:#f1f1f1;text-shadow:2px 2px 0 #333,-1px -1px 0 #111;font-family:Impact,Arial Black,sans-serif;letter-spacing:1px}
+.dlDungeons{margin-top:5px;font-size:clamp(16px,2.8vw,32px);color:#e9b83f;text-shadow:2px 2px 0 #163b73,-1px -1px 0 #081c39;font-family:Impact,Arial Black,sans-serif}
+.dlDungeons span{color:#79c7ff}
 </style>
 </style>
 </head>
@@ -149,7 +154,8 @@ a{color:var(--blue)}
 </div>
 
 <div class="footer">
-  <b>Blockpedia 26.3:</b> fan-made Minecraft reference interface. The live registry and textures are loaded from the Minecraft 26.3 asset/data ecosystem. Always verify version-specific recipes and mechanics on the linked Minecraft Wiki page.
+  <b>Blockpedia 26.3:</b> fan-made Minecraft reference interface. The live registry and textures are loaded from the Minecraft 26.3 asset/data ecosystem. Always verify version-specific recipes and mechanics on the linked Minecraft Wiki page.<br>
+  <small>Not affiliated with or endorsed by Mojang or Microsoft.</small>
 </div>
 
 <script>
@@ -251,6 +257,7 @@ function textureCandidates(name){
 }
 
 function picture(name,cls=''){
+ if(name==='dungeons2-logo') return `<div class="dungeonsLogo ${cls}" role="img" aria-label="Minecraft Dungeons II logo"><div class="dlMinecraft">MINECRAFT</div><div class="dlDungeons">DUNGEONS <span>II</span></div></div>`;
  const bid='img_'+Math.random().toString(36).slice(2);
  const candidates=textureCandidates(name);
  const encoded=encodeURIComponent(JSON.stringify(candidates));
@@ -272,7 +279,8 @@ const articles=[
  {id:'wood-sets',title:'Wood Sets',tag:'Building',image:'oak_log',desc:'A quick tour of logs, planks, leaves, slabs, stairs, fences, doors and more.'},
  {id:'nether-building',title:'Building in the Nether',tag:'Nether',image:'netherrack',desc:'Key Nether building blocks and where to get them.'},
  {id:'redstone-101',title:'Redstone 101',tag:'Technical',image:'redstone_block',desc:'Start exploring redstone components and useful block properties.'},
- {id:'new-in-263',title:'What’s New in 26.3',tag:'Update',image:'poplar_leaves',desc:'New Wilderness Bound content, including Poplar wood and colorful leaves.'}
+ {id:'new-in-263',title:'What’s New in 26.3',tag:'Update',image:'poplar_leaves',desc:'New Wilderness Bound content, including Poplar wood and colorful leaves.'},
+ {id:'dungeons-ii',title:'Minecraft Dungeons II',tag:'Upcoming Game',image:'dungeons2-logo',desc:'A look at the upcoming sequel, its new world, gameplay systems, story, multiplayer and release information.'}
 ];
 
 function articleView(a){
@@ -282,7 +290,8 @@ function articleView(a){
   'wood-sets':['oak_log','oak_planks','oak_leaves','oak_stairs','oak_slab'],
   'nether-building':['netherrack','basalt','blackstone','nether_bricks','soul_sand'],
   'redstone-101':['redstone_block','redstone_torch','piston','observer','hopper'],
-  'new-in-263':['poplar_log','poplar_planks','red_poplar_leaves','orange_poplar_leaves','yellow_poplar_leaves','wool_stairs','white_concrete_stairs']
+  'new-in-263':['poplar_log','poplar_planks','red_poplar_leaves','orange_poplar_leaves','yellow_poplar_leaves','wool_stairs','white_concrete_stairs'],
+  'dungeons-ii':['obsidian','stone','iron_block','diamond_block']
  }[a.id]||[];
  return `<div class="panel articlePage">
    <button class="btn back" onclick="home('articles')">← Back to articles</button>
@@ -307,8 +316,20 @@ function articleCopy(id){
    <h2>Where to look</h2><p>Use the site's Nether category to browse related blocks, then open a block to see its source and a link to its complete Wiki article.</p>`,
   'redstone-101':`<p>Redstone components let blocks respond to power, signals and player interactions. This encyclopedia includes common redstone-related blocks in the Utility category.</p>
    <h2>Start simple</h2><p>Learn one component at a time, then combine components into circuits. The block entries provide the quick reference information, while the linked Wiki pages provide the deeper mechanics.</p>`,
-  'new-in-263':`<p>Minecraft Java Edition 26.3 is the <i>Wilderness Bound</i> release. It added the Dappled Forest biome, Poplar trees, fallen Poplar trees, new colored Poplar leaves, a Poplar wood set, Shelf Mushrooms, Red Shrubs, Abandoned Camps, Explorer Maps, Cushions, Straw Beds, Wool stairs/slabs and Concrete stairs/slabs. citeturn960204search0</p>
-   <h2>Poplar wood</h2><p>The new Poplar tree has red, orange and yellow leaf variants, while Poplar Leaves can drop Poplar Saplings that may grow into any of the three variants. citeturn960204search0</p>`
+  'new-in-263':`<p>Minecraft Java Edition 26.3 is the <i>Wilderness Bound</i> release. It added the Dappled Forest biome, Poplar trees, fallen Poplar trees, new colored Poplar leaves, a Poplar wood set, Shelf Mushrooms, Red Shrubs, Abandoned Camps, Explorer Maps, Cushions, Straw Beds, Wool stairs/slabs and Concrete stairs/slabs.</p>
+   <h2>Poplar wood</h2><p>The new Poplar tree has red, orange and yellow leaf variants, while Poplar Leaves can drop Poplar Saplings that may grow into any of the three variants.</p>`,
+  'dungeons-ii':`<p><b>Minecraft Dungeons II</b> is the upcoming sequel to Minecraft Dungeons. It is scheduled to release on <b>September 29, 2026</b>.</p>
+   <h2>Overview</h2><p>Dungeons II expands the dungeon-crawling action RPG formula of the original game with a larger interconnected world, new enemies, new gear systems, settlements, quests, fast-travel locations and points of interest.</p>
+   <h2>The Sift</h2><p>One of the major additions is <b>the Sift</b>, a new dimension connected to the story. Mysterious rifts allow players to enter the Sift, where they encounter unfamiliar environments and threats.</p>
+   <h2>Story</h2><p>The <b>Illager High Council</b> is a major force behind the new threat. The council includes the Prime Enchanter, Supreme Evoker and Grand Illusioner. Their attacks from the Sift bring soul-corrupted forces into different worlds.</p>
+   <h2>Gameplay</h2><p>Dungeons II adds new movement and combat options. Players can jump as well as dodge-roll, and jumping can be used while exploring and fighting. The game also expands the number of combat slots from 6 to 12.</p>
+   <h2>Enchanting</h2><p>The enchanting system has been redesigned around <b>enchantment books</b>. Players can collect books in a personal library and use an <b>Enchantsmith</b> to apply and upgrade enchantments on gear.</p>
+   <h2>Weapons</h2><p>Revealed weapon types include the Battlestaff, Powerbow, War Hammer, Sword, Greatsword, Double Daggers, Battle Hammer and Trickbow. Different weapons can support different play styles, including power, speed and range.</p>
+   <h2>Multiplayer</h2><p>Dungeons II supports cooperative play locally and online. It includes cross-play, matchmaking and party codes.</p>
+   <h2>Platforms</h2><ul><li>Windows</li><li>Steam</li><li>Xbox Series X|S</li><li>PlayStation 5</li><li>Nintendo Switch</li><li>Nintendo Switch 2</li></ul>
+   <h2>Pre-order bonuses</h2><p>The official store listing says pre-orders include two hero skins, the Twisted Cape and the Twisted Chicken pet.</p>
+   <h2>Hero Cape</h2><p>Players who own both Minecraft Dungeons and Minecraft Dungeons II and use the same Microsoft account can unlock the Hero Cape under the promotion requirements.</p>
+   <h2>Release</h2><p>Minecraft Dungeons II is scheduled to launch on <b>September 29, 2026</b>.</p>`
  };
  return copy[id]||'<p>Article coming soon.</p>';
 }
