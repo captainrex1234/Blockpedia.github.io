@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="google-site-verification" content="gNPqK5ZYuPR14Z1vskLPbDIKPgiy16UFbFtpPmhjaHM" />
 <title>Blockpedia — Minecraft Block Encyclopedia</title>
 <style>
@@ -58,7 +57,6 @@ a{color:var(--blue)}
  transition:.08s
 }
 .card:hover{border-color:var(--green2);transform:translateY(-1px)}
-.card{cursor:pointer}.craftGrid{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(3,64px);gap:5px;width:max-content;margin:10px 0 7px}.craftSlot{background:#8b8b8b;border:2px solid #4a4a4a;box-shadow:inset 2px 2px #bdbdbd,inset -2px -2px #666;display:flex;align-items:center;justify-content:center}.craftSlot img{width:48px;height:48px;image-rendering:pixelated;object-fit:contain}.craftSlot .emoji{font-size:28px}.craftOutput{display:flex;align-items:center;gap:10px;margin-top:8px}.craftArrow{font-size:24px;color:#9bdc6d}.craftResult{width:64px;height:64px;background:#222;border:2px solid #555;display:flex;align-items:center;justify-content:center}.craftResult img{width:50px;height:50px;image-rendering:pixelated;object-fit:contain}.craftResult .emoji{font-size:30px}.craftNote{color:#aaa;font-size:12px}.relatedGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:9px}.relatedBlock{background:#171717;border:1px solid #444;padding:9px;cursor:pointer;text-align:center}.relatedBlock:hover{border-color:var(--green2);transform:translateY(-1px)}.relatedBlock img{width:64px;height:64px;image-rendering:pixelated;object-fit:contain}.blockPageSection{margin-top:14px}.blockPageNav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px}.blockPageNav a{background:#222;border:1px solid #555;color:#9bdc6d;padding:5px 8px;text-decoration:none;font-size:11px}.blockPageNav a:hover{border-color:var(--green2)}
 .thumb{height:125px;border:2px solid #555;background:
  repeating-conic-gradient(#373737 0 25%,#2f2f2f 0 50%) 50%/22px 22px;
  display:flex;align-items:center;justify-content:center;overflow:hidden}
@@ -521,7 +519,7 @@ function renderGrid(){
  $('status').textContent=`Showing ${arr.length.toLocaleString()} of ${blocks.length.toLocaleString()} blocks`;
  $('grid').innerHTML=arr.length?arr.map(b=>{
    const h=b.hardness===-1?'Unbreakable':(b.hardness??'—');
-   return `<article class="card" onclick="openBlockNewTab('${esc(b.name)}')" title="Open ${esc(pretty(b.name))} in a new tab">
+   return `<article class="card" onclick="showDetail('${esc(b.name)}')" title="Open ${esc(pretty(b.name))}">
      <div class="thumb">${picture(b.name)}</div>
      <div class="name">${esc(pretty(b.name))}</div>
      <div class="mini">Hardness: ${esc(String(h))}</div>
@@ -549,57 +547,21 @@ function blockUses(b){
 function relatedBlocks(b){
  const n=b.name;
  let names=[];
- const wood=n.match(/^(oak|spruce|birch|jungle|acacia|dark_oak|mangrove|cherry|bamboo|crimson|warped|pale_oak|poplar)(?:_|$)/)?.[1];
- if(wood) names=[`${wood}_log`,`${wood}_wood`,`${wood}_planks`,`${wood}_stairs`,`${wood}_slab`,`${wood}_fence`,`${wood}_door`,`${wood}_trapdoor`,`${wood}_leaves`];
- if(/_ore$/.test(n)){const base=n.replace(/_ore$/,'');names=[`${base}_ore`,`deepslate_${base}_ore`,`${base}_block`,'stone','deepslate'];}
- if(/_stairs$/.test(n)){const base=n.replace(/_stairs$/,'');names=[`${base}_stairs`,`${base}_slab`,`${base}_wall`,base];}
- if(/_slab$/.test(n)){const base=n.replace(/_slab$/,'');names=[`${base}_stairs`,`${base}_slab`,`${base}_wall`,base];}
- if(/_wall$/.test(n)){const base=n.replace(/_wall$/,'');names=[`${base}_wall`,`${base}_stairs`,`${base}_slab`,base];}
- if(/_(wool|concrete|concrete_powder|terracotta|stained_glass|stained_glass_pane)$/.test(n)){const base=n.replace(/_(wool|concrete|concrete_powder|terracotta|stained_glass|stained_glass_pane)$/,'');names=[`${base}_wool`,`${base}_concrete`,`${base}_concrete_powder`,`${base}_terracotta`,`${base}_stained_glass`,`${base}_stained_glass_pane`];}
+ if(/^(oak|spruce|birch|jungle|acacia|dark_oak|mangrove|cherry|bamboo|crimson|warped|pale_oak|poplar)/.test(n)){
+   const m=n.match(/^(oak|spruce|birch|jungle|acacia|dark_oak|mangrove|cherry|bamboo|crimson|warped|pale_oak|poplar)/)?.[1];
+   if(m) names=[`${m}_log`,`${m}_planks`,`${m}_leaves`,`${m}_stairs`,`${m}_slab`];
+ }
+ if(/_ore$/.test(n)) names=[n,'stone','deepslate',n.replace('_ore','')+'_block'];
+ if(/_stairs$/.test(n)) names=[n.replace('_stairs','_planks'),n.replace('_stairs','_slab'),n];
+ if(/_slab$/.test(n)) names=[n.replace('_slab','_stairs'),n.replace('_slab',''),n];
+ if(/_wall$/.test(n)) names=[n.replace('_wall',''),n.replace('_wall','_stairs'),n.replace('_wall','_slab')];
  if(names.length<3 && isNetherBlock(b)) names=['netherrack','blackstone','basalt','nether_bricks','soul_sand'];
  if(names.length<3 && isEndBlock(b)) names=['end_stone','end_stone_bricks','purpur_block','chorus_plant','end_rod'];
  if(names.length<3) names=['stone','cobblestone','deepslate','dirt','sand'];
  const unique=[]; for(const x of names){if(x!==n&&!unique.includes(x)&&blocks.some(b=>b.name===x))unique.push(x)}
- return unique.slice(0,8);
+ return unique.slice(0,6);
 }
 
-function craftRecipe(b){
- const n=b.name;
- const empty='<div class="craftSlot"></div>';
- const slot=x=>x?`<div class="craftSlot">${picture(x)}</div>`:empty;
- let cells=[null,null,null,null,null,null,null,null], result=n, count='1';
- let note='Recipe shown for the selected Minecraft version where a simple recipe is known.';
- if(/_planks$/.test(n)){
-   const base=n.replace(/_planks$/,'_log'); if(blocks.some(x=>x.name===base)){cells[4]=base;count='4';note='Place one matching log or wood in any crafting slot.';}
-   else return {html:`<div class="box">${esc(guide(b).craft)}</div>`,note:''};
- }else if(/_stairs$/.test(n)){
-   const base=n.replace(/_stairs$/,''); cells=[base,null,null,base,base,null,base,base,base]; count='4'; note='Six matching blocks make four stairs.';
- }else if(/_slab$/.test(n)){
-   const base=n.replace(/_slab$/,''); cells=[null,null,null,base,base,base,null,null,null]; count='6'; note='Three matching blocks make six slabs.';
- }else if(/_wall$/.test(n)){
-   const base=n.replace(/_wall$/,''); cells=[base,base,base,base,base,base,null,null,null]; count='6'; note='Six matching blocks make six walls.';
- }else if(/_block$/.test(n) && /^(diamond|gold|iron|copper|coal|lapis|redstone|emerald)_block$/.test(n)){
-   const base=n.replace(/_block$/,''); cells=Array(9).fill(base);count='1';note='Nine matching resource items make one block.';
- }else if(n==='end_stone_bricks'){
-   cells[3]='end_stone';cells[4]='end_stone';cells[6]='end_stone';cells[7]='end_stone';count='4';note='Four End Stone make four End Stone Bricks.';
- }else if(n==='ender_chest'){
-   cells=[ 'obsidian','obsidian','obsidian','obsidian','eye_of_ender','obsidian','obsidian','obsidian','obsidian'];count='1';note='Eight Obsidian surrounding one Eye of Ender.';
- }else if(n==='end_rod'){
-   cells[4]='blaze_rod';cells[7]='popped_chorus_fruit';count='4';note='One Blaze Rod above one Popped Chorus Fruit makes four End Rods.';
- }else if(n==='glass'){
-   return {html:`<div class="box"><div class="craftOutput"><div>${picture('sand')}</div><div class="craftArrow">→</div><div class="craftResult">${picture('glass')}</div></div><div class="craftNote">Smelt Sand in a furnace to make Glass.</div></div>`,note:''};
- }else if(n==='stone'){
-   return {html:`<div class="box"><div class="craftOutput"><div>${picture('cobblestone')}</div><div class="craftArrow">→</div><div class="craftResult">${picture('stone')}</div></div><div class="craftNote">Smelt Cobblestone in a furnace to make Stone.</div></div>`,note:''};
- }else if(n==='crafting_table'){
-   cells=[ 'oak_planks','oak_planks',null,'oak_planks','oak_planks',null,null,null,null];count='1';note='Any matching wood planks can be used.';
- }else if(n==='chest'){
-   cells=['oak_planks','oak_planks','oak_planks','oak_planks',null,'oak_planks','oak_planks','oak_planks','oak_planks'];count='1';note='Eight matching planks surrounding the center slot.';
- }else{
-   return {html:`<div class="box">${esc(guide(b).craft)}<div class="craftNote">The exact recipe may vary by block or may not be a normal crafting-table recipe.</div></div>`,note:''};
- }
- const grid=cells.map(slot).join('');
- return {html:`<div class="box"><div class="craftGrid">${grid}</div><div class="craftOutput"><span class="craftArrow">→</span><div class="craftResult">${picture(result)}</div><b>×${esc(count)}</b></div><div class="craftNote">${esc(note)}</div></div>`,note};
-}
 function usefulGuide(b){
  const n=b.name;
  if(/_ore$|ancient_debris|diamond|emerald|gold|iron|coal|redstone|lapis|copper/.test(n)) return {id:'ore-hunting',title:'Ore Hunting Guide',desc:'Useful tips for finding and mining Minecraft ores.'};
@@ -614,11 +576,8 @@ function blockUrl(name){
 }
 
 function openBlockUrl(name){
- openBlockNewTab(name);
-}
-
-function openBlockNewTab(name){
- window.open(blockUrl(name),'_blank','noopener');
+ history.pushState({block:name},'',`?block=${encodeURIComponent(name)}`);
+ showDetail(name,false);
 }
 
 function showDetail(name,updateUrl=true){
@@ -635,7 +594,7 @@ function showDetail(name,updateUrl=true){
   <div id="favoriteAction" style="margin-bottom:11px"></div>
   <section id="picture"><div class="detail-head"><div class="bigthumb">${picture(b.name)}</div><div><h2>${esc(pretty(b.name))}</h2><div class="id">minecraft:${esc(b.name)}</div></div></div>
   <div class="stats"><div class="stat"><b>Hardness</b>${esc(String(h))}</div><div class="stat"><b>Stack size</b>${esc(String(stack))}</div><div class="stat"><b>Best tool</b>${esc(toolName(b))}</div><div class="stat"><b>Categories</b>${cats(b).map(c=>`<span class="tag">${esc(c)}</span>`).join('')}</div><div class="stat"><b>State IDs</b>${b.minStateId??'—'}–${b.maxStateId??'—'}</div><div class="stat"><b>States</b>${esc(String(states))}</div></div></section>
-  <section id="recipe" class="blockPageSection"><h3>Crafting recipe</h3>${craftRecipe(b).html}</section>
+  <section id="recipe" class="blockPageSection"><h3>Recipe</h3><div class="box">${esc(g.craft)}</div></section>
   <section id="uses" class="blockPageSection"><h3>Uses</h3><div class="box">${esc(blockUses(b))}</div></section>
   <section id="find" class="blockPageSection"><h3>Where to find it</h3><div class="box">${esc(g.find)}</div></section>
   <section id="tool" class="blockPageSection"><h3>Tool required</h3><div class="box">${esc(toolName(b))}</div></section>
@@ -732,7 +691,7 @@ async function showFavorites(){
  await loadFavorites();
  const favBlocks=blocks.filter(b=>favoriteNames.has(b.name));
  $('main').innerHTML=`<section class="panel hero"><h1>⭐ Favorites</h1><p>Your saved blocks for Minecraft ${esc(selectedVersion)}.</p></section><div class="toolbar"><div class="status">${favBlocks.length} favorite${favBlocks.length===1?'':'s'}</div></div><div id="grid" class="grid"></div>`;
- $('grid').innerHTML=favBlocks.length?favBlocks.map(b=>`<article class="card" onclick="openBlockNewTab('${esc(b.name)}')"><div class="thumb">${picture(b.name)}</div><div class="name">${esc(pretty(b.name))}</div><div class="mini">${esc(selectedVersion)}</div><div class="open">View full entry →</div></article>`).join(''):'<div class="empty">You have no favorites in this Minecraft version yet.</div>';
+ $('grid').innerHTML=favBlocks.length?favBlocks.map(b=>`<article class="card" onclick="showDetail('${esc(b.name)}')"><div class="thumb">${picture(b.name)}</div><div class="name">${esc(pretty(b.name))}</div><div class="mini">${esc(selectedVersion)}</div><div class="open">View full entry →</div></article>`).join(''):'<div class="empty">You have no favorites in this Minecraft version yet.</div>';
  closeDetail();
 }
 
