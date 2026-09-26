@@ -760,54 +760,39 @@ function renderAccount(message=''){
  });
 }
 let forgotEmail='';
-let forgotExpiresAt=0;
-let forgotTimer=null;
 function showForgotPassword(message=''){
  const c=$('accountContent');
- c.innerHTML=`<div class="authBox"><h1>Forgot your password?</h1><p>Enter your Blockpedia account email. We'll send a verification code that expires in 5 minutes.</p><label>Email</label><input id="forgotEmail" type="email" autocomplete="email" placeholder="you@example.com" value="${esc(forgotEmail)}"><button class="btn" onclick="sendPasswordCode()">Send verification code</button><div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="renderAccount()">Back to log in</button></p></div>`;
+ c.innerHTML=`<div class="authBox"><h1>Forgot your password?</h1><p>Enter your Blockpedia account email. We'll send you a secure password-reset link.</p><label>Email</label><input id="forgotEmail" type="email" autocomplete="email" placeholder="you@example.com" value="${esc(forgotEmail)}"><button class="btn" onclick="sendPasswordReset()">Send password reset link</button><div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="renderAccount()">Back to log in</button></p></div>`;
 }
-async function sendPasswordCode(){
+async function sendPasswordReset(){
  const email=$('forgotEmail').value.trim().toLowerCase();
  if(!email){showForgotPassword('Enter your account email.');return;}
- const {error}=await supabaseClient.auth.resetPasswordForEmail(email);
- if(error){showForgotPassword(error.message);return;}
  forgotEmail=email;
- forgotExpiresAt=Date.now()+5*60*1000;
- showPasswordCodeForm();
+ const redirectTo=window.location.origin+window.location.pathname;
+ const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo});
+ if(error){showForgotPassword(error.message);return;}
+ showForgotPassword('Password reset email sent. Open the link in the email to continue.');
 }
-function showPasswordCodeForm(message=''){
+function showResetPassword(message=''){
  const c=$('accountContent');
- c.innerHTML=`<div class="authBox"><h1>Enter verification code</h1><p>We sent a verification code to <b>${esc(forgotEmail)}</b>.</p><p><b>Code expires in <span id="forgotCountdown">5:00</span></b></p><label>Verification code</label><input id="forgotCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"><label>New password</label><input id="forgotNewPassword" type="password" autocomplete="new-password" placeholder="New password"><button class="btn" onclick="verifyPasswordCode()">Reset password</button><div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="showForgotPassword()">Send a new code</button></p></div>`;
- startForgotCountdown();
+ c.innerHTML=`<div class="authBox"><h1>Set a new password</h1><p>You are signed in through the secure password-reset link.</p><label>New password</label><input id="resetNewPassword" type="password" autocomplete="new-password" placeholder="New password"><button class="btn" onclick="finishPasswordReset()">Set new password</button><div id="authMsg" class="authMsg">${esc(message)}</div></div>`;
 }
-function startForgotCountdown(){
- if(forgotTimer)clearInterval(forgotTimer);
- const tick=()=>{
-  const el=$('forgotCountdown');
-  const remaining=Math.max(0,forgotExpiresAt-Date.now());
-  const total=Math.ceil(remaining/1000);
-  if(el)el.textContent=`${Math.floor(total/60)}:${String(total%60).padStart(2,'0')}`;
-  if(remaining<=0){clearInterval(forgotTimer);forgotTimer=null;if(el)el.textContent='expired';}
- };
- tick(); forgotTimer=setInterval(tick,250);
-}
-async function verifyPasswordCode(){
- if(Date.now()>=forgotExpiresAt){showPasswordCodeForm('This verification code has expired. Please send a new one.');return;}
- const code=$('forgotCode').value.trim();
- const password=$('forgotNewPassword').value;
- if(!/^\d{6}$/.test(code)){showPasswordCodeForm('Enter the 6-digit verification code.');return;}
- if(password.length<6){showPasswordCodeForm('Your new password must be at least 6 characters.');return;}
- const {error:verifyError}=await supabaseClient.auth.verifyOtp({email:forgotEmail,token:code,type:'recovery'});
- if(verifyError){showPasswordCodeForm(verifyError.message);return;}
- const {error:updateError}=await supabaseClient.auth.updateUser({password});
- if(updateError){showPasswordCodeForm(updateError.message);return;}
- if(forgotTimer)clearInterval(forgotTimer);
- forgotTimer=null; forgotEmail=''; forgotExpiresAt=0;
- favoriteNames=new Set();favoriteLoadedUserId=null;
+async function finishPasswordReset(){
+ const password=$('resetNewPassword').value;
+ if(password.length<6){showResetPassword('Your new password must be at least 6 characters.');return;}
+ const {error}=await supabaseClient.auth.updateUser({password});
+ if(error){showResetPassword(error.message);return;}
+ forgotEmail='';
  await loadFavorites();
  renderAccount('Password changed successfully. You are now signed in.');
  updateAccountButton();
 }
+
+supabaseClient?.auth?.onAuthStateChange((event,session)=>{
+ if(event==='PASSWORD_RECOVERY' && session){
+  setTimeout(()=>showResetPassword(),0);
+ }
+});
 
 async function signupAccount(){
  const email=$('authEmail').value.trim(), password=$('authPassword').value;
