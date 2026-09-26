@@ -139,6 +139,8 @@ a{color:var(--blue)}
     <button data-cat="Utility">Utility & redstone <span id="utilityCount" class="count">—</span></button>
     <button data-cat="Nether">Nether <span id="netherCount" class="count">—</span></button>
     <button data-cat="End">End <span id="endCount" class="count">—</span></button>
+    <h3 style="margin-top:18px">ACCOUNT</h3>
+    <button id="favoritesSide" onclick="showFavorites()">⭐ Favorites <span id="favoritesCount" class="count">—</span></button>
   </aside>
 
   <main class="main">
@@ -178,6 +180,8 @@ function setSourcesForVersion(version){
 setSourcesForVersion(selectedVersion);
 
 let blocks=[], items=[], itemMap={}, currentCat='All', includeTechnical=false;
+let favoriteNames=new Set();
+let favoriteLoadedUserId=null;
 let currentView='home';
 let customBlocksCache=[];
 let customArticlesCache=[];
@@ -498,6 +502,7 @@ function showDetail(name){
  const states=b.states?.length?b.states.map(s=>`${s.name} (${s.num_values})`).join(', '):'None';
  $('detail').innerHTML=`<div class="detail-inner">
   <button class="btn" onclick="closeDetail()" style="margin-bottom:11px">× Close</button>
+  <div id="favoriteAction" style="margin-bottom:11px"></div>
   <div class="detail-head">
    <div class="bigthumb">${picture(b.name)}</div>
    <div><h2>${esc(pretty(b.name))}</h2><div class="id">minecraft:${esc(b.name)}</div></div>
@@ -515,6 +520,81 @@ function showDetail(name){
   <div class="section"><h3>Renewability</h3><div class="box">${esc(g.renewable)}</div></div>
   <div class="section"><h3>Full information</h3><div class="box"><a target="_blank" rel="noopener" href="${SOURCES.wiki+cleanName(b.name)}">Open the complete Minecraft Wiki article →</a></div></div>
  </div>`;
+ renderFavoriteAction(b.name);
+}
+
+async function getSignedInUser(){
+ if(!supabaseClient)return null;
+ const {data}=await supabaseClient.auth.getSession();
+ return data.session?.user||null;
+}
+
+async function loadFavorites(){
+ favoriteNames=new Set();
+ favoriteLoadedUserId=null;
+ const user=await getSignedInUser();
+ if(!user){updateFavoritesCount();return;}
+ const {data,error}=await supabaseClient.from('favorites').select('block_name').eq('user_id',user.id);
+ if(error){console.warn('Could not load favorites',error);updateFavoritesCount();return;}
+ favoriteNames=new Set((data||[]).map(x=>x.block_name));
+ favoriteLoadedUserId=user.id;
+ updateFavoritesCount();
+}
+
+function updateFavoritesCount(){
+ const el=$('favoritesCount');
+ if(el)el.textContent=favoriteNames.size;
+}
+
+async function renderFavoriteAction(name){
+ const el=$('favoriteAction');
+ if(!el)return;
+ const user=await getSignedInUser();
+ if(!user){
+  el.innerHTML='<button class="navbtn secondary" onclick="showAccount()">🔒 Log in to add to Favorites</button>';
+  return;
+ }
+ if(favoriteLoadedUserId!==user.id)await loadFavorites();
+ const saved=favoriteNames.has(name);
+ el.innerHTML=`<button class="btn" onclick="toggleFavorite('${esc(name)}')">${saved?'★ Favorited':'☆ Add to Favorites'}</button>`;
+}
+
+async function toggleFavorite(name){
+ const user=await getSignedInUser();
+ if(!user){showAccount();return;}
+ if(favoriteLoadedUserId!==user.id)await loadFavorites();
+ if(favoriteNames.has(name)){
+  const {error}=await supabaseClient.from('favorites').delete().eq('user_id',user.id).eq('block_name',name);
+  if(error){alert(error.message);return;}
+  favoriteNames.delete(name);
+ }else{
+  const {error}=await supabaseClient.from('favorites').insert({user_id:user.id,block_name:name});
+  if(error){alert(error.message);return;}
+  favoriteNames.add(name);
+ }
+ updateFavoritesCount();
+ renderFavoriteAction(name);
+ if(currentView==='favorites')showFavorites();
+}
+
+async function showFavorites(){
+ restoreMain();
+ currentView='favorites';
+ document.querySelector('.side button[data-cat].active')?.classList.remove('active');
+ if(!supabaseClient){
+  $('main').innerHTML='<div class="panel empty"><h2>Favorites</h2><p>Favorites require Supabase accounts to be connected.</p></div>';
+  closeDetail();return;
+ }
+ const user=await getSignedInUser();
+ if(!user){
+  $('main').innerHTML='<div class="panel empty"><h2>⭐ Favorites</h2><p>You need to be signed in to use Favorites.</p><button class="btn" onclick="showAccount()">Log in / Sign up</button></div>';
+  closeDetail();return;
+ }
+ await loadFavorites();
+ const favBlocks=blocks.filter(b=>favoriteNames.has(b.name));
+ $('main').innerHTML=`<section class="panel hero"><h1>⭐ Favorites</h1><p>Your saved blocks for Minecraft ${esc(selectedVersion)}.</p></section><div class="toolbar"><div class="status">${favBlocks.length} favorite${favBlocks.length===1?'':'s'}</div></div><div id="grid" class="grid"></div>`;
+ $('grid').innerHTML=favBlocks.length?favBlocks.map(b=>`<article class="card" onclick="showDetail('${esc(b.name)}')"><div class="thumb">${picture(b.name)}</div><div class="name">${esc(pretty(b.name))}</div><div class="mini">${esc(selectedVersion)}</div><div class="open">View full entry →</div></article>`).join(''):'<div class="empty">You have no favorites in this Minecraft version yet.</div>';
+ closeDetail();
 }
 
 function closeDetail(){
@@ -571,9 +651,10 @@ async function loginAccount(){
  const email=$('authEmail').value.trim(), password=$('authPassword').value;
  const {error}=await supabaseClient.auth.signInWithPassword({email,password});
  if(error){renderAccount(error.message);return;}
+ await loadFavorites();
  renderAccount(); updateAccountButton();
 }
-async function logoutAccount(){await supabaseClient.auth.signOut();renderAccount('You have been logged out.');updateAccountButton();}
+async function logoutAccount(){await supabaseClient.auth.signOut();favoriteNames=new Set();favoriteLoadedUserId=null;updateFavoritesCount();renderAccount('You have been logged out.');updateAccountButton();}
 async function updateAccountButton(){
  if(!supabaseClient)return;
  const {data}=await supabaseClient.auth.getSession();
@@ -627,7 +708,7 @@ async function load(version=selectedVersion){
 }
 const oldHome=home; home=function(anchor=''){restoreMain();oldHome(anchor)};
 const oldShowBlocks=showBlocks; showBlocks=function(openName=''){restoreMain();oldShowBlocks(openName)};
-if(supabaseClient){supabaseClient.auth.onAuthStateChange(()=>updateAccountButton());updateAccountButton();}
+if(supabaseClient){supabaseClient.auth.onAuthStateChange(async()=>{await loadFavorites();updateAccountButton();});updateAccountButton();loadFavorites();}
 
 $('versionSelect')?.addEventListener('change',e=>load(e.target.value));
 load();
