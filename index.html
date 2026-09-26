@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="google-site-verification" content="gNPqK5ZYuPR14Z1vskLPbDIKPgiy16UFbFtpPmhjaHM" />
 <title>Blockpedia — Minecraft Block Encyclopedia</title>
 <style>
@@ -64,7 +65,7 @@ a{color:var(--blue)}
 .thumb .emoji{font-size:53px;text-shadow:4px 4px #111}
 .name{font-weight:900;margin-top:9px;line-height:1.15}.mini{color:#999;font-size:12px;margin-top:4px}
 .card .open{margin-top:auto;color:#86d35f;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding-top:8px}
-.detail{padding:14px;position:sticky;top:76px;height:max-content}
+.detail{padding:14px;position:sticky;top:76px;height:calc(100vh - 92px);max-height:calc(100vh - 92px);overflow-y:auto;scrollbar-width:thin}
 .detail-inner{min-height:140px}
 .detail-head{display:flex;gap:12px;align-items:center;border-bottom:2px solid #454545;padding-bottom:12px}
 .bigthumb{width:114px;height:114px;flex:none;background:repeating-conic-gradient(#373737 0 25%,#2f2f2f 0 50%) 50%/22px 22px;border:2px solid #555;display:flex;align-items:center;justify-content:center;overflow:hidden}
@@ -93,9 +94,10 @@ a{color:var(--blue)}
 .articleText ul{padding-left:22px}
 .related{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .related .miniCard{background:#171717;border:1px solid #444;padding:9px;cursor:pointer}.miniCard:hover{border-color:var(--green2)}
+.relatedGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}.relatedBlock{background:#171717;border:1px solid #444;padding:5px;cursor:pointer;text-align:center;font-size:12px}.relatedBlock:hover{border-color:var(--green2);transform:translateY(-1px)}.relatedBlock img{width:46px;height:46px;image-rendering:pixelated;object-fit:contain;display:block;margin:0 auto 3px}
 .empty,.loading{padding:35px;text-align:center;color:#999;background:var(--panel);border:2px solid var(--line)}
 .footer{max-width:1450px;margin:auto;padding:20px;color:#777;font-size:12px;line-height:1.6}
-@media(max-width:1160px){.wrap{grid-template-columns:205px minmax(0,1fr)}.detail{grid-column:1/-1;position:static}}
+@media(max-width:1160px){.wrap{grid-template-columns:205px minmax(0,1fr)}.detail{grid-column:1/-1;position:static;height:auto;max-height:none;overflow:visible}}
 @media(max-width:780px){.wrap{grid-template-columns:1fr}.side{display:none}.top{flex-wrap:wrap}.search{order:3;flex-basis:100%}.status{margin-left:0}.quick{grid-template-columns:1fr}.homeHero h1{font-size:32px}}
 .authBox{max-width:460px;margin:0 auto}.authBox h1{margin-top:0}.authBox input{width:100%;padding:11px;margin:7px 0 12px;background:#101010;color:#fff;border:2px solid #555;border-radius:3px}.authMsg{margin:10px 0;color:#e5c65a}.accountCard{background:#292929;border:2px solid #484848;padding:18px}.dashboardGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.dashboardCard{background:#242424;border:2px solid #484848;padding:16px}.dashboardCard h3{margin-top:0;color:#8fd45e}.recentList{display:grid;gap:8px;margin-top:10px}.recentItem{display:flex;align-items:center;gap:10px;background:#191919;border:1px solid #444;padding:9px;cursor:pointer}.recentItem:hover{border-color:#8fd45e}.recentThumb{width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:#111}.recentThumb img{max-width:34px;max-height:34px}.recentName{font-weight:800}.recentVersion{font-size:11px;color:#aaa}
 clearRecent{margin-top:10px}.@media (max-width:800px){.dashboardGrid{grid-template-columns:1fr}}
@@ -575,11 +577,6 @@ function blockUrl(name){
  return `${location.origin}${location.pathname}?block=${encodeURIComponent(name)}`;
 }
 
-function openBlockUrl(name){
- history.pushState({block:name},'',`?block=${encodeURIComponent(name)}`);
- showDetail(name,false);
-}
-
 function showDetail(name,updateUrl=true){
  const b=blocks.find(x=>x.name===name);if(!b)return;
  addRecentlyViewed(b);
@@ -589,7 +586,6 @@ function showDetail(name,updateUrl=true){
  const related=relatedBlocks(b).map(n=>blocks.find(x=>x.name===n)).filter(Boolean);
  const guideInfo=usefulGuide(b);
  $('detail').innerHTML=`<div class="detail-inner" id="block-page">
-  <div class="blockPageNav"><a href="?block=${encodeURIComponent(b.name)}#picture">Picture</a><a href="?block=${encodeURIComponent(b.name)}#recipe">Recipe</a><a href="?block=${encodeURIComponent(b.name)}#uses">Uses</a><a href="?block=${encodeURIComponent(b.name)}#find">Where to find</a><a href="?block=${encodeURIComponent(b.name)}#tool">Tool required</a><a href="?block=${encodeURIComponent(b.name)}#related">Related blocks</a><a href="?block=${encodeURIComponent(b.name)}#guide">Useful guide</a></div>
   <button class="btn" onclick="history.back()" style="margin-bottom:11px">← Back</button>
   <div id="favoriteAction" style="margin-bottom:11px"></div>
   <section id="picture"><div class="detail-head"><div class="bigthumb">${picture(b.name)}</div><div><h2>${esc(pretty(b.name))}</h2><div class="id">minecraft:${esc(b.name)}</div></div></div>
@@ -598,7 +594,7 @@ function showDetail(name,updateUrl=true){
   <section id="uses" class="blockPageSection"><h3>Uses</h3><div class="box">${esc(blockUses(b))}</div></section>
   <section id="find" class="blockPageSection"><h3>Where to find it</h3><div class="box">${esc(g.find)}</div></section>
   <section id="tool" class="blockPageSection"><h3>Tool required</h3><div class="box">${esc(toolName(b))}</div></section>
-  <section id="related" class="blockPageSection"><h3>Related blocks</h3><div class="relatedGrid">${related.length?related.map(r=>`<div class="relatedBlock" onclick="openBlockUrl('${esc(r.name)}')"><div>${picture(r.name)}</div><b>${esc(pretty(r.name))}</b></div>`).join(''):'<div class="box">No closely related blocks found.</div>'}</div></section>
+  <section id="related" class="blockPageSection"><h3>Related blocks</h3><div class="relatedGrid">${related.length?related.map(r=>`<div class="relatedBlock" onclick="showDetail('${esc(r.name)}')"><div>${picture(r.name)}</div><b>${esc(pretty(r.name))}</b></div>`).join(''):'<div class="box">No closely related blocks found.</div>'}</div></section>
   <section id="guide" class="blockPageSection"><h3>Useful guide</h3><a class="guideLink" href="?article=${encodeURIComponent(guideInfo.id)}"><b>${esc(guideInfo.title)}</b><br><span style="color:#aaa">${esc(guideInfo.desc)}</span></a></section>
   <section class="blockPageSection"><h3>More information</h3><div class="box"><a target="_blank" rel="noopener" href="${SOURCES.wiki+cleanName(b.name)}">Open the complete Minecraft Wiki article →</a></div></section>
  </div>`;
@@ -760,39 +756,54 @@ function renderAccount(message=''){
  });
 }
 let forgotEmail='';
+let forgotExpiresAt=0;
+let forgotTimer=null;
 function showForgotPassword(message=''){
  const c=$('accountContent');
- c.innerHTML=`<div class="authBox"><h1>Forgot your password?</h1><p>Enter your Blockpedia account email. We'll send you a secure password-reset link.</p><label>Email</label><input id="forgotEmail" type="email" autocomplete="email" placeholder="you@example.com" value="${esc(forgotEmail)}"><button class="btn" onclick="sendPasswordReset()">Send password reset link</button><div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="renderAccount()">Back to log in</button></p></div>`;
+ c.innerHTML=`<div class="authBox"><h1>Forgot your password?</h1><p>Enter your Blockpedia account email. We'll send a verification code that expires in 5 minutes.</p><label>Email</label><input id="forgotEmail" type="email" autocomplete="email" placeholder="you@example.com" value="${esc(forgotEmail)}"><button class="btn" onclick="sendPasswordCode()">Send verification code</button><div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="renderAccount()">Back to log in</button></p></div>`;
 }
-async function sendPasswordReset(){
+async function sendPasswordCode(){
  const email=$('forgotEmail').value.trim().toLowerCase();
  if(!email){showForgotPassword('Enter your account email.');return;}
- forgotEmail=email;
- const redirectTo=window.location.origin+window.location.pathname;
- const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo});
+ const {error}=await supabaseClient.auth.resetPasswordForEmail(email);
  if(error){showForgotPassword(error.message);return;}
- showForgotPassword('Password reset email sent. Open the link in the email to continue.');
+ forgotEmail=email;
+ forgotExpiresAt=Date.now()+5*60*1000;
+ showPasswordCodeForm();
 }
-function showResetPassword(message=''){
+function showPasswordCodeForm(message=''){
  const c=$('accountContent');
- c.innerHTML=`<div class="authBox"><h1>Set a new password</h1><p>You are signed in through the secure password-reset link.</p><label>New password</label><input id="resetNewPassword" type="password" autocomplete="new-password" placeholder="New password"><button class="btn" onclick="finishPasswordReset()">Set new password</button><div id="authMsg" class="authMsg">${esc(message)}</div></div>`;
+ c.innerHTML=`<div class="authBox"><h1>Enter verification code</h1><p>We sent a verification code to <b>${esc(forgotEmail)}</b>.</p><p><b>Code expires in <span id="forgotCountdown">5:00</span></b></p><label>Verification code</label><input id="forgotCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"><label>New password</label><input id="forgotNewPassword" type="password" autocomplete="new-password" placeholder="New password"><button class="btn" onclick="verifyPasswordCode()">Reset password</button><div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="showForgotPassword()">Send a new code</button></p></div>`;
+ startForgotCountdown();
 }
-async function finishPasswordReset(){
- const password=$('resetNewPassword').value;
- if(password.length<6){showResetPassword('Your new password must be at least 6 characters.');return;}
- const {error}=await supabaseClient.auth.updateUser({password});
- if(error){showResetPassword(error.message);return;}
- forgotEmail='';
+function startForgotCountdown(){
+ if(forgotTimer)clearInterval(forgotTimer);
+ const tick=()=>{
+  const el=$('forgotCountdown');
+  const remaining=Math.max(0,forgotExpiresAt-Date.now());
+  const total=Math.ceil(remaining/1000);
+  if(el)el.textContent=`${Math.floor(total/60)}:${String(total%60).padStart(2,'0')}`;
+  if(remaining<=0){clearInterval(forgotTimer);forgotTimer=null;if(el)el.textContent='expired';}
+ };
+ tick(); forgotTimer=setInterval(tick,250);
+}
+async function verifyPasswordCode(){
+ if(Date.now()>=forgotExpiresAt){showPasswordCodeForm('This verification code has expired. Please send a new one.');return;}
+ const code=$('forgotCode').value.trim();
+ const password=$('forgotNewPassword').value;
+ if(!/^\d{6}$/.test(code)){showPasswordCodeForm('Enter the 6-digit verification code.');return;}
+ if(password.length<6){showPasswordCodeForm('Your new password must be at least 6 characters.');return;}
+ const {error:verifyError}=await supabaseClient.auth.verifyOtp({email:forgotEmail,token:code,type:'recovery'});
+ if(verifyError){showPasswordCodeForm(verifyError.message);return;}
+ const {error:updateError}=await supabaseClient.auth.updateUser({password});
+ if(updateError){showPasswordCodeForm(updateError.message);return;}
+ if(forgotTimer)clearInterval(forgotTimer);
+ forgotTimer=null; forgotEmail=''; forgotExpiresAt=0;
+ favoriteNames=new Set();favoriteLoadedUserId=null;
  await loadFavorites();
  renderAccount('Password changed successfully. You are now signed in.');
  updateAccountButton();
 }
-
-supabaseClient?.auth?.onAuthStateChange((event,session)=>{
- if(event==='PASSWORD_RECOVERY' && session){
-  setTimeout(()=>showResetPassword(),0);
- }
-});
 
 async function signupAccount(){
  const email=$('authEmail').value.trim(), password=$('authPassword').value;
