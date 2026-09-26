@@ -368,7 +368,14 @@ const articles=[
  {id:'wood-sets',title:'Wood Sets',tag:'Building',image:'oak_log',desc:'A quick tour of logs, planks, leaves, slabs, stairs, fences, doors and more.'},
  {id:'nether-building',title:'Building in the Nether',tag:'Nether',image:'netherrack',desc:'Key Nether building blocks and where to get them.'},
  {id:'redstone-101',title:'Redstone 101',tag:'Technical',image:'redstone_block',desc:'Start exploring redstone components and useful block properties.'},
- {id:'new-in-263',title:'What’s New in 26.3',tag:'Update',image:'poplar_leaves',desc:'New Wilderness Bound content, including Poplar wood and colorful leaves.'}
+ {id:'new-in-263',title:'What’s New in 26.3',tag:'Update',image:'poplar_leaves',desc:'New Wilderness Bound content, including Poplar wood and colorful leaves.'},
+ {id:'nether-survival',title:'Nether Survival Guide',tag:'Survival',image:'netherrack',desc:'A quick reference for navigating the Nether and choosing useful blocks for a safe base.'},
+ {id:'end-guide',title:'The End Guide',tag:'End',image:'end_stone',desc:'Explore the End, its building materials, and the blocks you will encounter there.'},
+ {id:'renewable-blocks',title:'Renewable Blocks',tag:'Guide',image:'oak_sapling',desc:'Learn which common building and resource blocks can be renewed through normal gameplay.'},
+ {id:'stone-building',title:'Stone Building Guide',tag:'Building',image:'stone_bricks',desc:'Compare stone-family blocks and build palettes for walls, floors, paths and structures.'},
+ {id:'redstone-starters',title:'Redstone Starter Projects',tag:'Technical',image:'piston',desc:'Simple ideas for learning how pistons, observers, hoppers and redstone components work together.'},
+ {id:'farming-blocks',title:'Farming & Crop Blocks',tag:'Survival',image:'farmland',desc:'A reference to farmland, crops and useful blocks for setting up simple farms.'},
+ {id:'decorating',title:'Decoration Blocks',tag:'Building',image:'lantern',desc:'Find blocks that add detail to interiors, exteriors, paths, roofs and other builds.'}
 ];
 
 function articleView(a){
@@ -378,7 +385,14 @@ function articleView(a){
   'wood-sets':['oak_log','oak_planks','oak_leaves','oak_stairs','oak_slab'],
   'nether-building':['netherrack','basalt','blackstone','nether_bricks','soul_sand'],
   'redstone-101':['redstone_block','redstone_torch','piston','observer','hopper'],
-  'new-in-263':['poplar_log','poplar_planks','red_poplar_leaves','orange_poplar_leaves','yellow_poplar_leaves','wool_stairs','white_concrete_stairs']
+  'new-in-263':['poplar_log','poplar_planks','red_poplar_leaves','orange_poplar_leaves','yellow_poplar_leaves','wool_stairs','white_concrete_stairs'],
+  'nether-survival':['netherrack','basalt','blackstone','soul_sand','nether_bricks','respawn_anchor'],
+  'end-guide':['end_stone','end_stone_bricks','purpur_block','end_rod','chorus_plant','obsidian'],
+  'renewable-blocks':['oak_sapling','oak_log','wheat','sugar_cane','cactus','bamboo'],
+  'stone-building':['stone','cobblestone','stone_bricks','deepslate','tuff','andesite'],
+  'redstone-starters':['redstone_block','redstone_torch','piston','observer','hopper','repeater'],
+  'farming-blocks':['farmland','wheat','carrots','potatoes','beetroots','composter'],
+  'decorating':['lantern','torch','glass','carpet','flower_pot','painting']
  }[a.id]||[];
  return `<div class="panel articlePage">
    <button class="btn back" onclick="home('articles')">← Back to articles</button>
@@ -403,8 +417,27 @@ function articleCopy(id){
    <h2>Where to look</h2><p>Use the site's Nether category to browse related blocks, then open a block to see its source and a link to its complete Wiki article.</p>`,
   'redstone-101':`<p>Redstone components let blocks respond to power, signals and player interactions. This encyclopedia includes common redstone-related blocks in the Utility category.</p>
    <h2>Start simple</h2><p>Learn one component at a time, then combine components into circuits. The block entries provide the quick reference information, while the linked Wiki pages provide the deeper mechanics.</p>`,
-  'new-in-263':`<p>Minecraft Java Edition 26.3 is the <i>Wilderness Bound</i> release. It added the Dappled Forest biome, Poplar trees, fallen Poplar trees, new colored Poplar leaves, a Poplar wood set, Shelf Mushrooms, Red Shrubs, Abandoned Camps, Explorer Maps, Cushions, Straw Beds, Wool stairs/slabs and Concrete stairs/slabs. citeturn960204search0</p>
-   <h2>Poplar wood</h2><p>The new Poplar tree has red, orange and yellow leaf variants, while Poplar Leaves can drop Poplar Saplings that may grow into any of the three variants. citeturn960204search0</p>`
+  'new-in-263':`<p>Minecraft Java Edition 26.3 is the <i>Wilderness Bound</i> release. It added the Dappled Forest biome, Poplar trees, fallen Poplar trees, new colored Poplar leaves, a Poplar wood set, Shelf Mushrooms, Red Shrubs, Abandoned Camps, Explorer Maps, Cushions, Straw Beds, Wool stairs/slabs and Concrete stairs/slabs.</p>
+   <h2>Poplar wood</h2><p>The new Poplar tree has red, orange and yellow leaf variants, while Poplar Leaves can drop Poplar Saplings that may grow into any of the three variants.</p>`,
+  'nether-survival':`<p>The Nether is a dangerous dimension with unusual terrain, hostile mobs and several block families that are useful for building and survival.</p>
+   <h2>Useful blocks</h2><ul><li><b>Blackstone</b> and <b>Basalt</b> are useful building materials.</li><li><b>Soul Sand</b> and <b>Soul Soil</b> are associated with soul-fire areas.</li><li><b>Nether Bricks</b> are common in Nether Fortress structures.</li><li><b>Respawn Anchors</b> can be used for setting a respawn point in the Nether when properly charged.</li></ul>
+   <h2>Building tip</h2><p>Keep a clear path back to your portal and mark important routes so it is easier to navigate.</p>`,
+  'end-guide':`<p>The End contains its own group of blocks, including End Stone, Purpur, Chorus plants and End Rods. These blocks are also useful for distinctive builds.</p>
+   <h2>Building materials</h2><p>End Stone and End Stone Bricks provide a pale stone palette, while Purpur blocks and pillars add a different texture and color. End Rods work well as compact light sources and decorative details.</p>
+   <h2>Browse the category</h2><p>Use Blockpedia's <b>End</b> category to see the blocks associated with the dimension, including blocks that also belong to other categories.</p>`,
+  'renewable-blocks':`<p>Renewable resources can be obtained repeatedly through normal gameplay instead of being permanently limited to a finite supply in the world.</p>
+   <h2>Common examples</h2><p>Tree wood can be renewed from saplings, while many crops can be replanted after harvesting. Blocks such as bamboo and sugar cane can also be grown repeatedly.</p>
+   <h2>Why it matters</h2><p>Renewable materials are useful for large projects because you can set up a repeatable supply before starting a big build.</p>`,
+  'stone-building':`<p>Stone-family blocks make reliable foundations, walls, paths and structural details. Mixing closely related textures can make a large build look less repetitive.</p>
+   <h2>Useful palette</h2><ul><li><b>Stone</b> for clean structural surfaces.</li><li><b>Cobblestone</b> for rougher walls and foundations.</li><li><b>Stone Bricks</b> for detailed masonry.</li><li><b>Deepslate</b> for darker builds and strong contrast.</li><li><b>Tuff</b>, <b>Andesite</b> and similar blocks for texture variation.</li></ul>`,
+  'redstone-starters':`<p>Redstone becomes easier to understand when you learn a few components at a time rather than trying to build a large machine immediately.</p>
+   <h2>Good first components</h2><ul><li><b>Redstone Torches</b> provide power and can invert signals in simple circuits.</li><li><b>Repeaters</b> help extend and control redstone signals.</li><li><b>Pistons</b> move blocks when powered.</li><li><b>Observers</b> detect block-state changes and produce a redstone pulse.</li><li><b>Hoppers</b> move and collect items for simple automation.</li></ul>`,
+  'farming-blocks':`<p>Farming uses a small set of blocks to create repeatable food and resource supplies.</p>
+   <h2>Core blocks</h2><p><b>Farmland</b> provides the growing surface for many crops. Crops such as wheat, carrots, potatoes and beetroots can then be planted and harvested.</p>
+   <h2>Useful extras</h2><p>A <b>Composter</b> can turn many plant-based items into useful outputs, making it a handy block to keep near crop farms.</p>`,
+  'decorating':`<p>Decoration blocks are useful when a build needs smaller details rather than just large structural surfaces.</p>
+   <h2>Easy details</h2><p>Lanterns and torches add lighting, glass creates windows, carpets add color and texture, flower pots provide small accents, and paintings can fill otherwise empty wall space.</p>
+   <h2>Build tip</h2><p>Try repeating a small set of decorative blocks throughout a build so the finished structure has a consistent visual style.</p>`
  };
  return copy[id]||'<p>Article coming soon.</p>';
 }
