@@ -114,7 +114,7 @@ a{color:var(--blue)}
 .dlMinecraft{font-size:clamp(14px,2.2vw,25px);color:#f1f1f1;text-shadow:2px 2px 0 #333,-1px -1px 0 #111;font-family:Impact,Arial Black,sans-serif;letter-spacing:1px}
 .dlDungeons{margin-top:5px;font-size:clamp(16px,2.8vw,32px);color:#e9b83f;text-shadow:2px 2px 0 #163b73,-1px -1px 0 #081c39;font-family:Impact,Arial Black,sans-serif}
 .dlDungeons span{color:#79c7ff}
-</style>
+.authBox{max-width:460px;margin:0 auto}.authBox h1{margin-top:0}.authBox input{width:100%;padding:11px;margin:7px 0 12px;background:#101010;color:#fff;border:2px solid #555;border-radius:3px}.authMsg{margin:10px 0;color:#e5c65a}.accountCard{background:#292929;border:2px solid #484848;padding:18px}
 </style>
 </head>
 <body>
@@ -123,7 +123,13 @@ a{color:var(--blue)}
   <input id="search" class="search" placeholder="Search blocks, articles, or anything..." autocomplete="off">
   <button class="navbtn" onclick="home()">Home</button>
   <button class="navbtn secondary" onclick="showBlocks()">Blocks</button>
+  <button id="accountBtn" class="navbtn secondary" onclick="showAccount()">Account</button>
 </header>
+
+
+<section id="accountPanel" class="panel" style="display:none;max-width:620px;margin:28px auto;padding:24px">
+  <div id="accountContent"></div>
+</section>
 
 <div class="wrap">
   <aside class="panel side">
@@ -158,7 +164,13 @@ a{color:var(--blue)}
   <small>Not affiliated with or endorsed by Mojang or Microsoft.</small>
 </div>
 
+<script src="supabase_config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const BACKEND_URL=window.BLOCKPEDIA_SUPABASE_URL||"";
+const BACKEND_KEY=window.BLOCKPEDIA_SUPABASE_ANON_KEY||"";
+const customBlockImages={};
+const supabaseClient=(BACKEND_URL&&!BACKEND_URL.includes("PASTE_YOUR")&&BACKEND_KEY&&!BACKEND_KEY.includes("PASTE_YOUR"))?window.supabase.createClient(BACKEND_URL,BACKEND_KEY):null;
 const SOURCES = {
   blocks:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/26.3/blocks.json',
   items:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/26.3/items.json',
@@ -187,6 +199,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const cleanName=n=>encodeURIComponent(pretty(n).replaceAll(' ','_'));
 
 function cat(b){
+ if(b.custom_category) return b.custom_category;
  const n=b.name;
  if(/ore|raw_|diamond|emerald|lapis|coal|redstone|copper|gold|iron|quartz|ancient_debris|netherite|amethyst|heavy_core|sulfur/.test(n))return 'Ores';
  if(/log|wood|planks|stem|hyphae|leaves|sapling|propagule|mangrove|bamboo|mushroom|flower|grass|fern|vine|roots|crop|cactus|sugar_cane|melon|pumpkin|wheat|beetroot|carrots|potatoes|chorus/.test(n))return 'Wood';
@@ -200,6 +213,7 @@ function cat(b){
 }
 
 function guide(b){
+ if(b.custom_obtain||b.custom_renewable) return {craft:b.custom_obtain||'See the custom Blockpedia entry.',find:b.custom_description||'Custom Blockpedia block.',renewable:b.custom_renewable||'See the custom Blockpedia entry.'};
  const n=b.name;
  let craft='Not craftable as a simple recipe, or the recipe depends on the block set.';
  let find='World generation or a structure/biome; open the linked Minecraft Wiki entry for exact locations.';
@@ -257,6 +271,8 @@ function textureCandidates(name){
 }
 
 function picture(name,cls=''){
+ if(customBlockImages[name]) return `<img class="${cls}" alt="${esc(pretty(name))}" src="${esc(customBlockImages[name])}">`;
+ if(name && /^https?:\/\//.test(name)) return `<img class="${cls}" alt="Custom Blockpedia image" src="${esc(name)}">`;
  if(name==='dungeons2-logo') return `<div class="dungeonsLogo ${cls}" role="img" aria-label="Minecraft Dungeons II logo"><div class="dlMinecraft">MINECRAFT</div><div class="dlDungeons">DUNGEONS <span>II</span></div></div>`;
  const bid='img_'+Math.random().toString(36).slice(2);
  const candidates=textureCandidates(name);
@@ -303,7 +319,9 @@ function articleView(a){
  </div>`;
 }
 
+const articleCopyCustom={};
 function articleCopy(id){
+ if(articleCopyCustom[id]) return articleCopyCustom[id];
  const copy={
   'mining-basics':`<p>Mining is one of the core loops of Minecraft. <b>Hardness</b> measures how long a block takes to break by hand or with the appropriate tool; the fastest tool also depends on the block's mining material.</p>
    <h2>Picking a tool</h2><p>Pickaxes are used for many stone and ore blocks, axes for wood, and shovels for dirt-like terrain. The block page on this site shows the material/tool family whenever the registry exposes it.</p>
@@ -454,6 +472,22 @@ async function load(){
  }catch(e){
   blocks=fallback;items=[];itemMap={};
  }
+ if(supabaseClient){
+  try{
+   const [{data:customArticles},{data:customBlocks}]=await Promise.all([
+    supabaseClient.from('custom_articles').select('*').order('created_at',{ascending:false}),
+    supabaseClient.from('custom_blocks').select('*').order('created_at',{ascending:false})
+   ]);
+   if(customArticles?.length){
+    articles.push(...customArticles.map(x=>({id:'custom-'+x.id,title:x.title,tag:x.tag,image:x.image,desc:x.description,content:x.content})));
+    customArticles.forEach(x=>{articleCopyCustom['custom-'+x.id]=x.content});
+   }
+   if(customBlocks?.length){
+    customBlocks.forEach(x=>{customBlockImages[x.name]=x.image_url});
+    blocks.push(...customBlocks.map(x=>({name:x.name,hardness:x.hardness??0,material:'custom',custom_obtain:x.obtain,custom_renewable:x.renewable,custom_description:x.description,custom_image:x.image_url,custom_category:x.category})));
+   }
+  }catch(e){console.warn('Blockpedia custom content unavailable',e)}
+ }
  const counts={All:0,Building:0,Natural:0,Ores:0,Wood:0,Decorative:0,Utility:0,Nether:0,End:0};
  blocks.forEach(b=>{counts.All++;const c=cat(b);if(counts[c]!==undefined)counts[c]++});
  const ids={All:'allCount',Building:'buildingCount',Natural:'naturalCount',Ores:'oreCount',Wood:'woodCount',Decorative:'decorCount',Utility:'utilityCount',Nether:'netherCount',End:'endCount'};
@@ -461,6 +495,49 @@ async function load(){
  document.querySelectorAll('.side button[data-cat]').forEach(x=>x.classList.remove('active'));
  home();
 }
+
+let authMode='login';
+function showAccount(){
+ currentView='account'; $('homeSide').classList.remove('active');
+ document.querySelector('.wrap').style.display='none';
+ $('accountPanel').style.display='block'; renderAccount(); window.scrollTo({top:0,behavior:'smooth'});
+}
+function renderAccount(message=''){
+ const c=$('accountContent');
+ if(!supabaseClient){c.innerHTML=`<div class="authBox"><h1>Account</h1><p>Account features are not connected yet. Add your Supabase URL and anon key to <b>supabase_config.js</b>.</p></div>`;return;}
+ supabaseClient.auth.getSession().then(({data})=>{
+  const session=data.session;
+  if(session){
+   const email=esc(session.user.email||'');
+   c.innerHTML=`<div class="authBox"><h1>Your Blockpedia Account</h1><div class="accountCard"><p><b>Email</b></p><p>${email}</p><p style="color:#aaa">You are currently signed in.</p><button class="btn" onclick="logoutAccount()">Log out</button></div></div>`;
+  }else{
+   c.innerHTML=`<div class="authBox"><h1>${authMode==='signup'?'Create your Blockpedia account':'Log in to Blockpedia'}</h1><p>${authMode==='signup'?'Create an account to use future personalized Blockpedia features.':'Log in to your existing Blockpedia account.'}</p><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" type="password" autocomplete="${authMode==='signup'?'new-password':'current-password'}" placeholder="Password"><button class="btn" onclick="${authMode==='signup'?'signupAccount':'loginAccount'}()">${authMode==='signup'?'Create account':'Log in'}</button><div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="authMode='${authMode==='signup'?'login':'signup'}';renderAccount()">${authMode==='signup'?'Already have an account? Log in':'Need an account? Sign up'}</button></p></div>`;
+  }
+ });
+}
+async function signupAccount(){
+ const email=$('authEmail').value.trim(), password=$('authPassword').value;
+ if(!email||!password){renderAccount('Enter an email and password.');return;}
+ const {data,error}=await supabaseClient.auth.signUp({email,password});
+ if(error){renderAccount(error.message);return;}
+ renderAccount(data.session?'Account created and signed in.':'Account created. Check your email to confirm your account, then log in.');
+}
+async function loginAccount(){
+ const email=$('authEmail').value.trim(), password=$('authPassword').value;
+ const {error}=await supabaseClient.auth.signInWithPassword({email,password});
+ if(error){renderAccount(error.message);return;}
+ renderAccount(); updateAccountButton();
+}
+async function logoutAccount(){await supabaseClient.auth.signOut();renderAccount('You have been logged out.');updateAccountButton();}
+async function updateAccountButton(){
+ if(!supabaseClient)return;
+ const {data}=await supabaseClient.auth.getSession();
+ const b=$('accountBtn'); if(b)b.textContent=data.session?'Account':'Log in';
+}
+function restoreMain(){document.querySelector('.wrap').style.display='grid';$('accountPanel').style.display='none';}
+const oldHome=home; home=function(anchor=''){restoreMain();oldHome(anchor)};
+const oldShowBlocks=showBlocks; showBlocks=function(openName=''){restoreMain();oldShowBlocks(openName)};
+if(supabaseClient){supabaseClient.auth.onAuthStateChange(()=>updateAccountButton());updateAccountButton();}
 
 load();
 </script>
