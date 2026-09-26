@@ -769,7 +769,7 @@ function showForgotPassword(message=''){
 async function sendPasswordCode(){
  const email=$('forgotEmail').value.trim().toLowerCase();
  if(!email){showForgotPassword('Enter your account email.');return;}
- const {error}=await supabaseClient.auth.signInWithOtp({email,options:{shouldCreateUser:false}});
+ const {error}=await supabaseClient.auth.resetPasswordForEmail(email);
  if(error){showForgotPassword(error.message);return;}
  forgotEmail=email;
  forgotExpiresAt=Date.now()+5*60*1000;
@@ -797,7 +797,7 @@ async function verifyPasswordCode(){
  const password=$('forgotNewPassword').value;
  if(!/^\d{6}$/.test(code)){showPasswordCodeForm('Enter the 6-digit verification code.');return;}
  if(password.length<6){showPasswordCodeForm('Your new password must be at least 6 characters.');return;}
- const {error:verifyError}=await supabaseClient.auth.verifyOtp({email:forgotEmail,token:code,type:'email'});
+ const {error:verifyError}=await supabaseClient.auth.verifyOtp({email:forgotEmail,token:code,type:'recovery'});
  if(verifyError){showPasswordCodeForm(verifyError.message);return;}
  const {error:updateError}=await supabaseClient.auth.updateUser({password});
  if(updateError){showPasswordCodeForm(updateError.message);return;}
