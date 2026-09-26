@@ -16,7 +16,6 @@ body{margin:0;background:linear-gradient(#121212,#0b0b0b);color:var(--text);font
 button,input,select{font:inherit}
 a{color:var(--blue)}
 .top{
- width:100%;
  position:sticky;top:0;z-index:20;display:flex;gap:11px;align-items:center;
  padding:10px 17px;background:#1d1d1d;border-bottom:4px solid #090909;
  box-shadow:0 3px 0 #060606
@@ -30,7 +29,7 @@ a{color:var(--blue)}
 }
 .btn:hover,.navbtn:hover{background:var(--green2)}
 .navbtn.secondary{background:#383838}
-.wrap{width:100%;max-width:none;box-sizing:border-box;margin:0;padding:18px clamp(10px,2vw,28px);display:grid;grid-template-columns:220px minmax(0,1fr) 345px;gap:18px}
+.wrap{max-width:1450px;margin:auto;padding:18px;display:grid;grid-template-columns:220px minmax(0,1fr) 345px;gap:18px}
 .panel{background:var(--panel);border:2px solid var(--line);box-shadow:0 3px 0 #080808}
 .side{padding:14px;height:max-content;position:sticky;top:76px}
 .side h3{font-size:12px;color:#8fd45e;margin:3px 0 8px;letter-spacing:.7px}
@@ -95,25 +94,6 @@ a{color:var(--blue)}
 .footer{max-width:1450px;margin:auto;padding:20px;color:#777;font-size:12px;line-height:1.6}
 @media(max-width:1160px){.wrap{grid-template-columns:205px minmax(0,1fr)}.detail{grid-column:1/-1;position:static}}
 @media(max-width:780px){.wrap{grid-template-columns:1fr}.side{display:none}.top{flex-wrap:wrap}.search{order:3;flex-basis:100%}.status{margin-left:0}.quick{grid-template-columns:1fr}.homeHero h1{font-size:32px}}
-
-<style>
-@media (min-width: 1600px){
-  .wrap{grid-template-columns:240px minmax(0,1fr) 380px;gap:22px;padding-left:28px;padding-right:28px}
-}
-@media (max-width: 1050px){
-  .wrap{grid-template-columns:190px minmax(0,1fr)}
-  .wrap > :last-child{grid-column:1 / -1}
-}
-@media (max-width: 720px){
-  .wrap{display:block;padding:10px}
-  .side{position:static;margin-bottom:12px}
-  .wrap > :last-child{margin-top:12px}
-}
-
-.dungeonsLogo{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;line-height:.9;filter:drop-shadow(0 3px 2px rgba(0,0,0,.45));font-weight:900;letter-spacing:-1px}
-.dlMinecraft{font-size:clamp(14px,2.2vw,25px);color:#f1f1f1;text-shadow:2px 2px 0 #333,-1px -1px 0 #111;font-family:Impact,Arial Black,sans-serif;letter-spacing:1px}
-.dlDungeons{margin-top:5px;font-size:clamp(16px,2.8vw,32px);color:#e9b83f;text-shadow:2px 2px 0 #163b73,-1px -1px 0 #081c39;font-family:Impact,Arial Black,sans-serif}
-.dlDungeons span{color:#79c7ff}
 .authBox{max-width:460px;margin:0 auto}.authBox h1{margin-top:0}.authBox input{width:100%;padding:11px;margin:7px 0 12px;background:#101010;color:#fff;border:2px solid #555;border-radius:3px}.authMsg{margin:10px 0;color:#e5c65a}.accountCard{background:#292929;border:2px solid #484848;padding:18px}
 </style>
 </head>
@@ -160,8 +140,7 @@ a{color:var(--blue)}
 </div>
 
 <div class="footer">
-  <b>Blockpedia 26.3:</b> fan-made Minecraft reference interface. The live registry and textures are loaded from the Minecraft 26.3 asset/data ecosystem. Always verify version-specific recipes and mechanics on the linked Minecraft Wiki page.<br>
-  <small>Not affiliated with or endorsed by Mojang or Microsoft.</small>
+  <b>Blockpedia 26.3:</b> fan-made Minecraft reference interface. The live registry and textures are loaded from the Minecraft 26.3 asset/data ecosystem. Always verify version-specific recipes and mechanics on the linked Minecraft Wiki page.
 </div>
 
 <script src="supabase_config.js"></script>
@@ -198,7 +177,7 @@ const pretty=s=>s.split('_').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join('
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cleanName=n=>encodeURIComponent(pretty(n).replaceAll(' ','_'));
 
-function cat(b){
+function baseCat(b){
  if(b.custom_category) return b.custom_category;
  const n=b.name;
  if(/ore|raw_|diamond|emerald|lapis|coal|redstone|copper|gold|iron|quartz|ancient_debris|netherite|amethyst|heavy_core|sulfur/.test(n))return 'Ores';
@@ -212,12 +191,106 @@ function cat(b){
  return 'Natural';
 }
 
+function isEndBlockName(n){
+ return /^(end_stone|end_stone_bricks|end_portal_frame|end_portal|end_gateway|chorus_flower|chorus_plant|purpur_block|purpur_pillar|purpur_stairs|purpur_slab|purpur_wall|end_rod|dragon_egg|obsidian|crying_obsidian|ender_chest)$/.test(n)
+   || /^purpur_/.test(n)
+   || /^chorus_/.test(n);
+}
+
+function isNetherBlockName(n){
+ return /^(netherrack|nether_bricks?|nether_brick_fence|nether_brick_stairs|nether_brick_slab|nether_brick_wall|red_nether_bricks|red_nether_brick_stairs|red_nether_brick_slab|red_nether_brick_wall|nether_wart_block|warped_wart_block|soul_sand|soul_soil|soul_torch|soul_lantern|soul_fire|crimson_nylium|warped_nylium|crimson_stem|warped_stem|crimson_hyphae|warped_hyphae|stripped_crimson_stem|stripped_warped_stem|stripped_crimson_hyphae|stripped_warped_hyphae|crimson_planks|warped_planks|crimson_slab|warped_slab|crimson_stairs|warped_stairs|crimson_fence|warped_fence|crimson_fence_gate|warped_fence_gate|crimson_door|warped_door|crimson_trapdoor|warped_trapdoor|crimson_button|warped_button|crimson_pressure_plate|warped_pressure_plate|crimson_sign|warped_sign|crimson_hanging_sign|warped_hanging_sign|crimson_roots|warped_roots|nether_sprouts|weeping_vines|twisting_vines|shroomlight|magma_block|glowstone|basalt|smooth_basalt|polished_basalt|blackstone|gilded_blackstone|polished_blackstone|polished_blackstone_bricks|polished_blackstone_brick_stairs|polished_blackstone_brick_slab|polished_blackstone_brick_wall|blackstone_stairs|blackstone_slab|blackstone_wall|respawn_anchor|lodestone|ancient_debris|nether_gold_ore|quartz_ore|nether_quartz_ore|netherite_block|bone_block|dried_ghast)$/.test(n)
+   || /^nether_/.test(n)
+   || /^crimson_/.test(n)
+   || /^warped_/.test(n);
+}
+
+// A block can belong to more than one section. This keeps its original
+// category while also adding Nether/End, instead of removing the old tag.
+function cats(b){
+ const out=[baseCat(b)];
+ const add=c=>{if(!out.includes(c))out.push(c)};
+ if(isNetherBlockName(b.name))add('Nether');
+ if(isEndBlockName(b.name))add('End');
+ return out;
+}
+
+// Kept for existing code that asks for a single category.
+function cat(b){return cats(b)[0];}
+
+function isEndBlock(b){
+ const n=b.name;
+ return /^(end_stone|end_stone_bricks|end_portal_frame|end_portal|end_gateway|chorus_flower|chorus_plant|purpur_block|purpur_pillar|purpur_stairs|purpur_slab|end_rod|dragon_egg|obsidian|crying_obsidian|ender_chest)$/.test(n) || /^purpur_/.test(n) || /^chorus_/.test(n);
+}
+function isNetherBlock(b){
+ const n=b.name;
+ return /^(netherrack|nether_bricks|nether_brick_fence|nether_brick_stairs|nether_brick_slab|nether_brick_wall|red_nether_bricks|red_nether_brick_stairs|red_nether_brick_slab|red_nether_brick_wall|soul_sand|soul_soil|soul_torch|soul_lantern|soul_fire|crimson_nylium|warped_nylium|crimson_stem|warped_stem|crimson_hyphae|warped_hyphae|stripped_crimson_stem|stripped_warped_stem|stripped_crimson_hyphae|stripped_warped_hyphae|crimson_planks|warped_planks|crimson_slab|warped_slab|crimson_stairs|warped_stairs|crimson_fence|warped_fence|crimson_fence_gate|warped_fence_gate|crimson_door|warped_door|crimson_trapdoor|warped_trapdoor|crimson_button|warped_button|crimson_pressure_plate|warped_pressure_plate|crimson_sign|warped_sign|crimson_hanging_sign|warped_hanging_sign|crimson_roots|warped_roots|nether_sprouts|weeping_vines|twisting_vines|shroomlight|magma_block|glowstone|basalt|smooth_basalt|polished_basalt|blackstone|gilded_blackstone|polished_blackstone_bricks|polished_blackstone_brick_stairs|polished_blackstone_brick_slab|polished_blackstone_brick_wall|blackstone_stairs|blackstone_slab|blackstone_wall|respawn_anchor|lodestone|ancient_debris|nether_gold_ore|quartz_ore|nether_quartz_ore|netherite_block|bone_block|nether_wart_block|warped_wart_block|fire|dried_ghast)$/.test(n) || /^nether_/.test(n) || /^crimson_/.test(n) || /^warped_/.test(n);
+}
+function categoriesFor(b){
+ const result=[]; const primary=cat(b);
+ if(primary && primary!=='Technical') result.push(primary);
+ if(isNetherBlock(b) && !result.includes('Nether')) result.push('Nether');
+ if(isEndBlock(b) && !result.includes('End')) result.push('End');
+ if(primary==='Technical' && includeTechnical) result.push('Technical');
+ return result;
+}
+function inCategory(b,c){return categoriesFor(b).includes(c);}
+
 function guide(b){
- if(b.custom_obtain||b.custom_renewable) return {craft:b.custom_obtain||'See the custom Blockpedia entry.',find:b.custom_description||'Custom Blockpedia block.',renewable:b.custom_renewable||'See the custom Blockpedia entry.'};
  const n=b.name;
  let craft='Not craftable as a simple recipe, or the recipe depends on the block set.';
  let find='World generation or a structure/biome; open the linked Minecraft Wiki entry for exact locations.';
  let renewable='See the full linked entry';
+
+ if(n==='end_stone'){
+  craft='Not normally crafted';
+  find='Generated throughout the End dimension';
+  renewable='Renewable through End generation';
+ }
+ else if(n==='end_stone_bricks'){
+  craft='4 End Stone → 4 End Stone Bricks';
+  find='Crafted from End Stone or obtained from End structures';
+  renewable='Renewable';
+ }
+ else if(/^(purpur_block|purpur_pillar|purpur_stairs|purpur_slab)$/.test(n)){
+  craft='Crafted from Purpur blocks or Popped Chorus Fruit, depending on the variant';
+  find='End Cities';
+  renewable='Renewable through Chorus Fruit';
+ }
+ else if(/^(chorus_plant|chorus_flower)$/.test(n)){
+  craft='Not normally crafted';
+  find='End islands';
+  renewable='Renewable by growing Chorus Plants';
+ }
+ else if(n==='end_rod'){
+  craft='Crafted from Blaze Rods and Popped Chorus Fruit';
+  find='End Cities';
+  renewable='Renewable';
+ }
+ else if(n==='end_portal_frame'){
+  craft='Cannot be crafted in Survival';
+  find='Generated in Stronghold End Portal rooms';
+  renewable='Non-renewable';
+ }
+ else if(n==='dragon_egg'){
+  craft='Cannot be crafted';
+  find='Generated after defeating the Ender Dragon';
+  renewable='Non-renewable';
+ }
+ else if(n==='obsidian'){
+  craft='Not normally crafted';
+  find='The End central island and End pillars';
+  renewable='Renewable through certain game mechanics';
+ }
+ else if(n==='crying_obsidian'){
+  craft='Can be obtained from Ruined Portals and Piglin bartering';
+  find='Ruined Portals and Piglin bartering';
+  renewable='Renewable through Piglin bartering';
+ }
+ else if(n==='ender_chest'){
+  craft='8 Obsidian + 1 Eye of Ender';
+  find='Crafted or found in End Cities';
+  renewable='Renewable';
+ }
  if(/_planks$/.test(n)){craft='1 matching log or wood → 4 planks';find='Crafted from the matching tree wood';renewable='Usually renewable'}
  else if(/_log$|_wood$|_stem$|_hyphae$/.test(n)){craft='Usually obtained from a matching tree or fungus';find=/crimson|warped/.test(n)?'Nether forests':'The matching tree biome';renewable='Renewable'}
  else if(/_leaves$/.test(n)){craft='Obtained from trees; not normally crafted';find='Attached to the corresponding tree';renewable='Renewable'}
@@ -271,9 +344,6 @@ function textureCandidates(name){
 }
 
 function picture(name,cls=''){
- if(customBlockImages[name]) return `<img class="${cls}" alt="${esc(pretty(name))}" src="${esc(customBlockImages[name])}">`;
- if(name && /^https?:\/\//.test(name)) return `<img class="${cls}" alt="Custom Blockpedia image" src="${esc(name)}">`;
- if(name==='dungeons2-logo') return `<div class="dungeonsLogo ${cls}" role="img" aria-label="Minecraft Dungeons II logo"><div class="dlMinecraft">MINECRAFT</div><div class="dlDungeons">DUNGEONS <span>II</span></div></div>`;
  const bid='img_'+Math.random().toString(36).slice(2);
  const candidates=textureCandidates(name);
  const encoded=encodeURIComponent(JSON.stringify(candidates));
@@ -295,8 +365,7 @@ const articles=[
  {id:'wood-sets',title:'Wood Sets',tag:'Building',image:'oak_log',desc:'A quick tour of logs, planks, leaves, slabs, stairs, fences, doors and more.'},
  {id:'nether-building',title:'Building in the Nether',tag:'Nether',image:'netherrack',desc:'Key Nether building blocks and where to get them.'},
  {id:'redstone-101',title:'Redstone 101',tag:'Technical',image:'redstone_block',desc:'Start exploring redstone components and useful block properties.'},
- {id:'new-in-263',title:'What’s New in 26.3',tag:'Update',image:'poplar_leaves',desc:'New Wilderness Bound content, including Poplar wood and colorful leaves.'},
- {id:'dungeons-ii',title:'Minecraft Dungeons II',tag:'Upcoming Game',image:'dungeons2-logo',desc:'A look at the upcoming sequel, its new world, gameplay systems, story, multiplayer and release information.'}
+ {id:'new-in-263',title:'What’s New in 26.3',tag:'Update',image:'poplar_leaves',desc:'New Wilderness Bound content, including Poplar wood and colorful leaves.'}
 ];
 
 function articleView(a){
@@ -306,8 +375,7 @@ function articleView(a){
   'wood-sets':['oak_log','oak_planks','oak_leaves','oak_stairs','oak_slab'],
   'nether-building':['netherrack','basalt','blackstone','nether_bricks','soul_sand'],
   'redstone-101':['redstone_block','redstone_torch','piston','observer','hopper'],
-  'new-in-263':['poplar_log','poplar_planks','red_poplar_leaves','orange_poplar_leaves','yellow_poplar_leaves','wool_stairs','white_concrete_stairs'],
-  'dungeons-ii':['obsidian','stone','iron_block','diamond_block']
+  'new-in-263':['poplar_log','poplar_planks','red_poplar_leaves','orange_poplar_leaves','yellow_poplar_leaves','wool_stairs','white_concrete_stairs']
  }[a.id]||[];
  return `<div class="panel articlePage">
    <button class="btn back" onclick="home('articles')">← Back to articles</button>
@@ -319,9 +387,7 @@ function articleView(a){
  </div>`;
 }
 
-const articleCopyCustom={};
 function articleCopy(id){
- if(articleCopyCustom[id]) return articleCopyCustom[id];
  const copy={
   'mining-basics':`<p>Mining is one of the core loops of Minecraft. <b>Hardness</b> measures how long a block takes to break by hand or with the appropriate tool; the fastest tool also depends on the block's mining material.</p>
    <h2>Picking a tool</h2><p>Pickaxes are used for many stone and ore blocks, axes for wood, and shovels for dirt-like terrain. The block page on this site shows the material/tool family whenever the registry exposes it.</p>
@@ -334,20 +400,8 @@ function articleCopy(id){
    <h2>Where to look</h2><p>Use the site's Nether category to browse related blocks, then open a block to see its source and a link to its complete Wiki article.</p>`,
   'redstone-101':`<p>Redstone components let blocks respond to power, signals and player interactions. This encyclopedia includes common redstone-related blocks in the Utility category.</p>
    <h2>Start simple</h2><p>Learn one component at a time, then combine components into circuits. The block entries provide the quick reference information, while the linked Wiki pages provide the deeper mechanics.</p>`,
-  'new-in-263':`<p>Minecraft Java Edition 26.3 is the <i>Wilderness Bound</i> release. It added the Dappled Forest biome, Poplar trees, fallen Poplar trees, new colored Poplar leaves, a Poplar wood set, Shelf Mushrooms, Red Shrubs, Abandoned Camps, Explorer Maps, Cushions, Straw Beds, Wool stairs/slabs and Concrete stairs/slabs.</p>
-   <h2>Poplar wood</h2><p>The new Poplar tree has red, orange and yellow leaf variants, while Poplar Leaves can drop Poplar Saplings that may grow into any of the three variants.</p>`,
-  'dungeons-ii':`<p><b>Minecraft Dungeons II</b> is the upcoming sequel to Minecraft Dungeons. It is scheduled to release on <b>September 29, 2026</b>.</p>
-   <h2>Overview</h2><p>Dungeons II expands the dungeon-crawling action RPG formula of the original game with a larger interconnected world, new enemies, new gear systems, settlements, quests, fast-travel locations and points of interest.</p>
-   <h2>The Sift</h2><p>One of the major additions is <b>the Sift</b>, a new dimension connected to the story. Mysterious rifts allow players to enter the Sift, where they encounter unfamiliar environments and threats.</p>
-   <h2>Story</h2><p>The <b>Illager High Council</b> is a major force behind the new threat. The council includes the Prime Enchanter, Supreme Evoker and Grand Illusioner. Their attacks from the Sift bring soul-corrupted forces into different worlds.</p>
-   <h2>Gameplay</h2><p>Dungeons II adds new movement and combat options. Players can jump as well as dodge-roll, and jumping can be used while exploring and fighting. The game also expands the number of combat slots from 6 to 12.</p>
-   <h2>Enchanting</h2><p>The enchanting system has been redesigned around <b>enchantment books</b>. Players can collect books in a personal library and use an <b>Enchantsmith</b> to apply and upgrade enchantments on gear.</p>
-   <h2>Weapons</h2><p>Revealed weapon types include the Battlestaff, Powerbow, War Hammer, Sword, Greatsword, Double Daggers, Battle Hammer and Trickbow. Different weapons can support different play styles, including power, speed and range.</p>
-   <h2>Multiplayer</h2><p>Dungeons II supports cooperative play locally and online. It includes cross-play, matchmaking and party codes.</p>
-   <h2>Platforms</h2><ul><li>Windows</li><li>Steam</li><li>Xbox Series X|S</li><li>PlayStation 5</li><li>Nintendo Switch</li><li>Nintendo Switch 2</li></ul>
-   <h2>Pre-order bonuses</h2><p>The official store listing says pre-orders include two hero skins, the Twisted Cape and the Twisted Chicken pet.</p>
-   <h2>Hero Cape</h2><p>Players who own both Minecraft Dungeons and Minecraft Dungeons II and use the same Microsoft account can unlock the Hero Cape under the promotion requirements.</p>
-   <h2>Release</h2><p>Minecraft Dungeons II is scheduled to launch on <b>September 29, 2026</b>.</p>`
+  'new-in-263':`<p>Minecraft Java Edition 26.3 is the <i>Wilderness Bound</i> release. It added the Dappled Forest biome, Poplar trees, fallen Poplar trees, new colored Poplar leaves, a Poplar wood set, Shelf Mushrooms, Red Shrubs, Abandoned Camps, Explorer Maps, Cushions, Straw Beds, Wool stairs/slabs and Concrete stairs/slabs. citeturn960204search0</p>
+   <h2>Poplar wood</h2><p>The new Poplar tree has red, orange and yellow leaf variants, while Poplar Leaves can drop Poplar Saplings that may grow into any of the three variants. citeturn960204search0</p>`
  };
  return copy[id]||'<p>Article coming soon.</p>';
 }
@@ -398,7 +452,7 @@ function showBlocks(openName=''){
 function renderGrid(){
  let q=$('search').value.trim().toLowerCase();
  let arr=blocks.filter(b=>includeTechnical||cat(b)!=='Technical');
- if(currentCat!=='All')arr=arr.filter(b=>cat(b)===currentCat);
+ if(currentCat!=='All')arr=arr.filter(b=>cats(b).includes(currentCat));
  if(q)arr=arr.filter(b=>(b.name+' '+pretty(b.name)).toLowerCase().includes(q));
  const sort=$('sort')?.value||'name';
  arr.sort((a,b)=>sort==='hardness'?(b.hardness??-999)-(a.hardness??-999):sort==='id'?(a.minStateId??0)-(b.minStateId??0):pretty(a.name).localeCompare(pretty(b.name)));
@@ -429,7 +483,7 @@ function showDetail(name){
    <div class="stat"><b>Hardness</b>${esc(String(h))}</div>
    <div class="stat"><b>Stack size</b>${esc(String(stack))}</div>
    <div class="stat"><b>Best tool</b>${esc(toolName(b))}</div>
-   <div class="stat"><b>Category</b>${esc(cat(b))}</div>
+   <div class="stat"><b>Categories</b>${cats(b).map(c=>`<span class="tag">${esc(c)}</span>`).join('')}</div>
    <div class="stat"><b>State IDs</b>${b.minStateId??'—'}–${b.maxStateId??'—'}</div>
    <div class="stat"><b>States</b>${esc(String(states))}</div>
   </div>
@@ -463,38 +517,6 @@ $('search').addEventListener('input',()=>{
  if(!$('grid'))showBlocks();
  else renderGrid();
 });
-
-async function load(){
- try{
-  const [br,ir]=await Promise.all([fetch(SOURCES.blocks),fetch(SOURCES.items)]);
-  if(!br.ok||!ir.ok)throw new Error('fetch failed');
-  blocks=await br.json();items=await ir.json();itemMap=Object.fromEntries(items.map(i=>[i.name,i]));
- }catch(e){
-  blocks=fallback;items=[];itemMap={};
- }
- if(supabaseClient){
-  try{
-   const [{data:customArticles},{data:customBlocks}]=await Promise.all([
-    supabaseClient.from('custom_articles').select('*').order('created_at',{ascending:false}),
-    supabaseClient.from('custom_blocks').select('*').order('created_at',{ascending:false})
-   ]);
-   if(customArticles?.length){
-    articles.push(...customArticles.map(x=>({id:'custom-'+x.id,title:x.title,tag:x.tag,image:x.image,desc:x.description,content:x.content})));
-    customArticles.forEach(x=>{articleCopyCustom['custom-'+x.id]=x.content});
-   }
-   if(customBlocks?.length){
-    customBlocks.forEach(x=>{customBlockImages[x.name]=x.image_url});
-    blocks.push(...customBlocks.map(x=>({name:x.name,hardness:x.hardness??0,material:'custom',custom_obtain:x.obtain,custom_renewable:x.renewable,custom_description:x.description,custom_image:x.image_url,custom_category:x.category})));
-   }
-  }catch(e){console.warn('Blockpedia custom content unavailable',e)}
- }
- const counts={All:0,Building:0,Natural:0,Ores:0,Wood:0,Decorative:0,Utility:0,Nether:0,End:0};
- blocks.forEach(b=>{counts.All++;const c=cat(b);if(counts[c]!==undefined)counts[c]++});
- const ids={All:'allCount',Building:'buildingCount',Natural:'naturalCount',Ores:'oreCount',Wood:'woodCount',Decorative:'decorCount',Utility:'utilityCount',Nether:'netherCount',End:'endCount'};
- Object.entries(ids).forEach(([k,id])=>{const el=$(id);if(el)el.textContent=counts[k]});
- document.querySelectorAll('.side button[data-cat]').forEach(x=>x.classList.remove('active'));
- home();
-}
 
 let authMode='login';
 function showAccount(){
@@ -535,6 +557,38 @@ async function updateAccountButton(){
  const b=$('accountBtn'); if(b)b.textContent=data.session?'Account':'Log in';
 }
 function restoreMain(){document.querySelector('.wrap').style.display='grid';$('accountPanel').style.display='none';}
+async function load(){
+ try{
+  const [br,ir]=await Promise.all([fetch(SOURCES.blocks),fetch(SOURCES.items)]);
+  if(!br.ok||!ir.ok)throw new Error('fetch failed');
+  blocks=await br.json();items=await ir.json();itemMap=Object.fromEntries(items.map(i=>[i.name,i]));
+ }catch(e){
+  blocks=fallback;items=[];itemMap={};
+ }
+ if(supabaseClient){
+  try{
+   const [{data:customArticles},{data:customBlocks}]=await Promise.all([
+    supabaseClient.from('custom_articles').select('*').order('created_at',{ascending:false}),
+    supabaseClient.from('custom_blocks').select('*').order('created_at',{ascending:false})
+   ]);
+   if(customArticles?.length){
+    articles.push(...customArticles.map(x=>({id:'custom-'+x.id,title:x.title,tag:x.tag,image:x.image,desc:x.description,content:x.content})));
+    customArticles.forEach(x=>{articleCopyCustom['custom-'+x.id]=x.content});
+   }
+   if(customBlocks?.length){
+    customBlocks.forEach(x=>{customBlockImages[x.name]=x.image_url});
+    blocks.push(...customBlocks.map(x=>({name:x.name,hardness:x.hardness??0,material:'custom',custom_obtain:x.obtain,custom_renewable:x.renewable,custom_description:x.description,custom_image:x.image_url,custom_category:x.category})));
+   }
+  }catch(e){console.warn('Blockpedia custom content unavailable',e)}
+ }
+ const counts={All:0,Building:0,Natural:0,Ores:0,Wood:0,Decorative:0,Utility:0,Nether:0,End:0};
+ blocks.forEach(b=>{counts.All++;cats(b).forEach(c=>{if(counts[c]!==undefined)counts[c]++})});
+ const ids={All:'allCount',Building:'buildingCount',Natural:'naturalCount',Ores:'oreCount',Wood:'woodCount',Decorative:'decorCount',Utility:'utilityCount',Nether:'netherCount',End:'endCount'};
+ Object.entries(ids).forEach(([k,id])=>{const el=$(id);if(el)el.textContent=counts[k]});
+ document.querySelectorAll('.side button[data-cat]').forEach(x=>x.classList.remove('active'));
+ home();
+}
+
 const oldHome=home; home=function(anchor=''){restoreMain();oldHome(anchor)};
 const oldShowBlocks=showBlocks; showBlocks=function(openName=''){restoreMain();oldShowBlocks(openName)};
 if(supabaseClient){supabaseClient.auth.onAuthStateChange(()=>updateAccountButton());updateAccountButton();}
