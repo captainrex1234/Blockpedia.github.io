@@ -29,6 +29,9 @@ a{color:var(--blue)}
 }
 .btn:hover,.navbtn:hover{background:var(--green2)}
 .navbtn.secondary{background:#383838}
+.versionSelect{background:#151515;color:#eee;border:2px solid #555;border-radius:3px;padding:8px 9px;font-weight:800;cursor:pointer;max-width:105px}
+.versionSelect:hover{border-color:var(--green2)}
+
 .wrap{max-width:1450px;margin:auto;padding:18px;display:grid;grid-template-columns:220px minmax(0,1fr) 345px;gap:18px}
 .panel{background:var(--panel);border:2px solid var(--line);box-shadow:0 3px 0 #080808}
 .side{padding:14px;height:max-content;position:sticky;top:76px}
@@ -95,7 +98,6 @@ a{color:var(--blue)}
 @media(max-width:1160px){.wrap{grid-template-columns:205px minmax(0,1fr)}.detail{grid-column:1/-1;position:static}}
 @media(max-width:780px){.wrap{grid-template-columns:1fr}.side{display:none}.top{flex-wrap:wrap}.search{order:3;flex-basis:100%}.status{margin-left:0}.quick{grid-template-columns:1fr}.homeHero h1{font-size:32px}}
 .authBox{max-width:460px;margin:0 auto}.authBox h1{margin-top:0}.authBox input{width:100%;padding:11px;margin:7px 0 12px;background:#101010;color:#fff;border:2px solid #555;border-radius:3px}.authMsg{margin:10px 0;color:#e5c65a}.accountCard{background:#292929;border:2px solid #484848;padding:18px}
-.favoriteBtn{margin-top:10px;background:#383838;border:2px solid #555;color:#fff;border-radius:3px;padding:8px 11px;font-weight:800;cursor:pointer}.favoriteBtn:hover{background:#4a4a4a}.favoriteBtn.active{background:#5a4d20;border-color:#d9bd55;color:#ffe58a}.favoriteList{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:12px}.favoriteItem{background:#181818;border:1px solid #454545;padding:10px;cursor:pointer}.favoriteItem:hover{border-color:var(--green2)}
 </style>
 </head>
 <body>
@@ -104,6 +106,14 @@ a{color:var(--blue)}
   <input id="search" class="search" placeholder="Search blocks, articles, or anything..." autocomplete="off">
   <button class="navbtn" onclick="home()">Home</button>
   <button class="navbtn secondary" onclick="showBlocks()">Blocks</button>
+  <select id="versionSelect" class="versionSelect" title="Minecraft version" aria-label="Minecraft version">
+    <option value="26.3">26.3</option>
+    <option value="26.2">26.2</option>
+    <option value="26.1">26.1</option>
+    <option value="1.21.11">1.21.11</option>
+    <option value="1.21.9">1.21.9</option>
+    <option value="1.21.8">1.21.8</option>
+  </select>
   <button id="accountBtn" class="navbtn secondary" onclick="showAccount()">Account</button>
 </header>
 
@@ -118,7 +128,6 @@ a{color:var(--blue)}
     <button id="homeSide" onclick="home()">Home</button>
     <button id="articlesSide" onclick="home('articles')">Featured Articles</button>
     <button onclick="showBlocks()">All Blocks</button>
-    <button onclick="showFavorites()">Favorites <span id="favoriteCount" class="count">—</span></button>
 
     <h3 style="margin-top:18px">BLOCK INDEX</h3>
     <button data-cat="All">All blocks <span id="allCount" class="count">—</span></button>
@@ -142,7 +151,7 @@ a{color:var(--blue)}
 </div>
 
 <div class="footer">
-  <b>Blockpedia 26.3:</b> fan-made Minecraft reference interface. The live registry and textures are loaded from the Minecraft 26.3 asset/data ecosystem. Always verify version-specific recipes and mechanics on the linked Minecraft Wiki page.
+  <b>Blockpedia:</b> fan-made Minecraft reference interface. The live registry and textures are loaded from the Minecraft 26.3 asset/data ecosystem. Always verify version-specific recipes and mechanics on the linked Minecraft Wiki page.
 </div>
 
 <script src="supabase_config.js"></script>
@@ -152,17 +161,28 @@ const BACKEND_URL=window.BLOCKPEDIA_SUPABASE_URL||"";
 const BACKEND_KEY=window.BLOCKPEDIA_SUPABASE_ANON_KEY||"";
 const customBlockImages={};
 const supabaseClient=(BACKEND_URL&&!BACKEND_URL.includes("PASTE_YOUR")&&BACKEND_KEY&&!BACKEND_KEY.includes("PASTE_YOUR"))?window.supabase.createClient(BACKEND_URL,BACKEND_KEY):null;
-const SOURCES = {
-  blocks:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/26.3/blocks.json',
-  items:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/26.3/items.json',
-  blockImg:'https://mcasset.cloud/26.3/assets/minecraft/textures/block/',
-  itemImg:'https://mcasset.cloud/26.3/assets/minecraft/textures/item/',
-  wiki:'https://minecraft.wiki/w/'
+const VERSION_CONFIG={
+  '26.3':{blocks:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/26.3/blocks.json',items:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/26.3/items.json'},
+  '26.2':{blocks:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/26.2/blocks.json',items:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/26.2/items.json'},
+  '26.1':{blocks:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/26.1/blocks.json',items:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/26.1/items.json'},
+  '1.21.11':{blocks:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/1.21.11/blocks.json',items:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/1.21.11/items.json'},
+  '1.21.9':{blocks:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/1.21.9/blocks.json',items:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/1.21.9/items.json'},
+  '1.21.8':{blocks:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/1.21.8/blocks.json',items:'https://raw.githubusercontent.com/RosegoldMC/minecraft-data.cr/main/data/1.21.8/items.json'}
 };
+let selectedVersion='26.3';
+let SOURCES={wiki:'https://minecraft.wiki/w/'};
+function setSourcesForVersion(version){
+ const v=VERSION_CONFIG[version]||VERSION_CONFIG['26.3'];
+ SOURCES={...v,blockImg:`https://mcasset.cloud/${version}/assets/minecraft/textures/block/`,itemImg:`https://mcasset.cloud/${version}/assets/minecraft/textures/item/`,wiki:'https://minecraft.wiki/w/'};
+}
+setSourcesForVersion(selectedVersion);
 
 let blocks=[], items=[], itemMap={}, currentCat='All', includeTechnical=false;
-let favoriteNames=new Set(), favoritesLoaded=false;
 let currentView='home';
+let customBlocksCache=[];
+let customArticlesCache=[];
+let customContentLoaded=false;
+let loadingVersion=false;
 
 const fallback=[
 {name:'stone',hardness:1.5,material:'mineable/pickaxe'},{name:'dirt',hardness:.5,material:'mineable/shovel'},
@@ -368,14 +388,7 @@ const articles=[
  {id:'wood-sets',title:'Wood Sets',tag:'Building',image:'oak_log',desc:'A quick tour of logs, planks, leaves, slabs, stairs, fences, doors and more.'},
  {id:'nether-building',title:'Building in the Nether',tag:'Nether',image:'netherrack',desc:'Key Nether building blocks and where to get them.'},
  {id:'redstone-101',title:'Redstone 101',tag:'Technical',image:'redstone_block',desc:'Start exploring redstone components and useful block properties.'},
- {id:'new-in-263',title:'What’s New in 26.3',tag:'Update',image:'poplar_leaves',desc:'New Wilderness Bound content, including Poplar wood and colorful leaves.'},
- {id:'nether-survival',title:'Nether Survival Guide',tag:'Survival',image:'netherrack',desc:'A quick reference for navigating the Nether and choosing useful blocks for a safe base.'},
- {id:'end-guide',title:'The End Guide',tag:'End',image:'end_stone',desc:'Explore the End, its building materials, and the blocks you will encounter there.'},
- {id:'renewable-blocks',title:'Renewable Blocks',tag:'Guide',image:'oak_sapling',desc:'Learn which common building and resource blocks can be renewed through normal gameplay.'},
- {id:'stone-building',title:'Stone Building Guide',tag:'Building',image:'stone_bricks',desc:'Compare stone-family blocks and build palettes for walls, floors, paths and structures.'},
- {id:'redstone-starters',title:'Redstone Starter Projects',tag:'Technical',image:'piston',desc:'Simple ideas for learning how pistons, observers, hoppers and redstone components work together.'},
- {id:'farming-blocks',title:'Farming & Crop Blocks',tag:'Survival',image:'farmland',desc:'A reference to farmland, crops and useful blocks for setting up simple farms.'},
- {id:'decorating',title:'Decoration Blocks',tag:'Building',image:'lantern',desc:'Find blocks that add detail to interiors, exteriors, paths, roofs and other builds.'}
+ {id:'new-in-263',title:'What’s New in 26.3',tag:'Update',image:'poplar_leaves',desc:'New Wilderness Bound content, including Poplar wood and colorful leaves.'}
 ];
 
 function articleView(a){
@@ -385,14 +398,7 @@ function articleView(a){
   'wood-sets':['oak_log','oak_planks','oak_leaves','oak_stairs','oak_slab'],
   'nether-building':['netherrack','basalt','blackstone','nether_bricks','soul_sand'],
   'redstone-101':['redstone_block','redstone_torch','piston','observer','hopper'],
-  'new-in-263':['poplar_log','poplar_planks','red_poplar_leaves','orange_poplar_leaves','yellow_poplar_leaves','wool_stairs','white_concrete_stairs'],
-  'nether-survival':['netherrack','basalt','blackstone','soul_sand','nether_bricks','respawn_anchor'],
-  'end-guide':['end_stone','end_stone_bricks','purpur_block','end_rod','chorus_plant','obsidian'],
-  'renewable-blocks':['oak_sapling','oak_log','wheat','sugar_cane','cactus','bamboo'],
-  'stone-building':['stone','cobblestone','stone_bricks','deepslate','tuff','andesite'],
-  'redstone-starters':['redstone_block','redstone_torch','piston','observer','hopper','repeater'],
-  'farming-blocks':['farmland','wheat','carrots','potatoes','beetroots','composter'],
-  'decorating':['lantern','torch','glass','carpet','flower_pot','painting']
+  'new-in-263':['poplar_log','poplar_planks','red_poplar_leaves','orange_poplar_leaves','yellow_poplar_leaves','wool_stairs','white_concrete_stairs']
  }[a.id]||[];
  return `<div class="panel articlePage">
    <button class="btn back" onclick="home('articles')">← Back to articles</button>
@@ -417,27 +423,8 @@ function articleCopy(id){
    <h2>Where to look</h2><p>Use the site's Nether category to browse related blocks, then open a block to see its source and a link to its complete Wiki article.</p>`,
   'redstone-101':`<p>Redstone components let blocks respond to power, signals and player interactions. This encyclopedia includes common redstone-related blocks in the Utility category.</p>
    <h2>Start simple</h2><p>Learn one component at a time, then combine components into circuits. The block entries provide the quick reference information, while the linked Wiki pages provide the deeper mechanics.</p>`,
-  'new-in-263':`<p>Minecraft Java Edition 26.3 is the <i>Wilderness Bound</i> release. It added the Dappled Forest biome, Poplar trees, fallen Poplar trees, new colored Poplar leaves, a Poplar wood set, Shelf Mushrooms, Red Shrubs, Abandoned Camps, Explorer Maps, Cushions, Straw Beds, Wool stairs/slabs and Concrete stairs/slabs.</p>
-   <h2>Poplar wood</h2><p>The new Poplar tree has red, orange and yellow leaf variants, while Poplar Leaves can drop Poplar Saplings that may grow into any of the three variants.</p>`,
-  'nether-survival':`<p>The Nether is a dangerous dimension with unusual terrain, hostile mobs and several block families that are useful for building and survival.</p>
-   <h2>Useful blocks</h2><ul><li><b>Blackstone</b> and <b>Basalt</b> are useful building materials.</li><li><b>Soul Sand</b> and <b>Soul Soil</b> are associated with soul-fire areas.</li><li><b>Nether Bricks</b> are common in Nether Fortress structures.</li><li><b>Respawn Anchors</b> can be used for setting a respawn point in the Nether when properly charged.</li></ul>
-   <h2>Building tip</h2><p>Keep a clear path back to your portal and mark important routes so it is easier to navigate.</p>`,
-  'end-guide':`<p>The End contains its own group of blocks, including End Stone, Purpur, Chorus plants and End Rods. These blocks are also useful for distinctive builds.</p>
-   <h2>Building materials</h2><p>End Stone and End Stone Bricks provide a pale stone palette, while Purpur blocks and pillars add a different texture and color. End Rods work well as compact light sources and decorative details.</p>
-   <h2>Browse the category</h2><p>Use Blockpedia's <b>End</b> category to see the blocks associated with the dimension, including blocks that also belong to other categories.</p>`,
-  'renewable-blocks':`<p>Renewable resources can be obtained repeatedly through normal gameplay instead of being permanently limited to a finite supply in the world.</p>
-   <h2>Common examples</h2><p>Tree wood can be renewed from saplings, while many crops can be replanted after harvesting. Blocks such as bamboo and sugar cane can also be grown repeatedly.</p>
-   <h2>Why it matters</h2><p>Renewable materials are useful for large projects because you can set up a repeatable supply before starting a big build.</p>`,
-  'stone-building':`<p>Stone-family blocks make reliable foundations, walls, paths and structural details. Mixing closely related textures can make a large build look less repetitive.</p>
-   <h2>Useful palette</h2><ul><li><b>Stone</b> for clean structural surfaces.</li><li><b>Cobblestone</b> for rougher walls and foundations.</li><li><b>Stone Bricks</b> for detailed masonry.</li><li><b>Deepslate</b> for darker builds and strong contrast.</li><li><b>Tuff</b>, <b>Andesite</b> and similar blocks for texture variation.</li></ul>`,
-  'redstone-starters':`<p>Redstone becomes easier to understand when you learn a few components at a time rather than trying to build a large machine immediately.</p>
-   <h2>Good first components</h2><ul><li><b>Redstone Torches</b> provide power and can invert signals in simple circuits.</li><li><b>Repeaters</b> help extend and control redstone signals.</li><li><b>Pistons</b> move blocks when powered.</li><li><b>Observers</b> detect block-state changes and produce a redstone pulse.</li><li><b>Hoppers</b> move and collect items for simple automation.</li></ul>`,
-  'farming-blocks':`<p>Farming uses a small set of blocks to create repeatable food and resource supplies.</p>
-   <h2>Core blocks</h2><p><b>Farmland</b> provides the growing surface for many crops. Crops such as wheat, carrots, potatoes and beetroots can then be planted and harvested.</p>
-   <h2>Useful extras</h2><p>A <b>Composter</b> can turn many plant-based items into useful outputs, making it a handy block to keep near crop farms.</p>`,
-  'decorating':`<p>Decoration blocks are useful when a build needs smaller details rather than just large structural surfaces.</p>
-   <h2>Easy details</h2><p>Lanterns and torches add lighting, glass creates windows, carpets add color and texture, flower pots provide small accents, and paintings can fill otherwise empty wall space.</p>
-   <h2>Build tip</h2><p>Try repeating a small set of decorative blocks throughout a build so the finished structure has a consistent visual style.</p>`
+  'new-in-263':`<p>Minecraft Java Edition 26.3 is the <i>Wilderness Bound</i> release. It added the Dappled Forest biome, Poplar trees, fallen Poplar trees, new colored Poplar leaves, a Poplar wood set, Shelf Mushrooms, Red Shrubs, Abandoned Camps, Explorer Maps, Cushions, Straw Beds, Wool stairs/slabs and Concrete stairs/slabs. citeturn960204search0</p>
+   <h2>Poplar wood</h2><p>The new Poplar tree has red, orange and yellow leaf variants, while Poplar Leaves can drop Poplar Saplings that may grow into any of the three variants. citeturn960204search0</p>`
  };
  return copy[id]||'<p>Article coming soon.</p>';
 }
@@ -450,7 +437,7 @@ function home(anchor=''){
    <div style="margin-top:17px"><button class="btn" onclick="showBlocks()">Browse every block →</button></div>
  </section>
  <div class="quick">
-   <div class="card" onclick="showBlocks()"><h3>🧱 Every Block</h3><p class="mini">Search the current Java Edition block registry.</p></div>
+   <div class="card" onclick="showBlocks()"><h3>🧱 Every Block</h3><p class="mini">Search the selected Minecraft Java Edition block registry.</p></div>
    <div class="card" onclick="home('articles')"><h3>📖 Articles</h3><p class="mini">Guides and reference pages appear here on the home page.</p></div>
    <div class="card" onclick="showBlocks('diamond_ore')"><h3>💎 Quick Search</h3><p class="mini">Open a block instantly and inspect its stats.</p></div>
  </div>
@@ -472,7 +459,7 @@ function showBlocks(openName=''){
    <h1>Minecraft Block Encyclopedia</h1>
    <p>Click any block picture or card to open the complete quick-reference entry.</p>
  </section>
- <div class="notice"><b>Images:</b> each card uses the 26.3 Minecraft texture assets first, then special block variants, an item icon, and finally a model-render fallback for blocks with unusual shapes.</div>
+ <div class="notice"><b>Images:</b> each card uses the selected Minecraft version texture assets first, then special block variants, an item icon, and finally a model-render fallback for blocks with unusual shapes.</div>
  <div class="toolbar">
    <select id="filter"><option value="all">Gameplay blocks</option><option value="technical">Include technical/hidden blocks</option></select>
    <select id="sort"><option value="name">A–Z</option><option value="hardness">Hardness</option><option value="id">Registry order</option></select>
@@ -515,7 +502,6 @@ function showDetail(name){
    <div class="bigthumb">${picture(b.name)}</div>
    <div><h2>${esc(pretty(b.name))}</h2><div class="id">minecraft:${esc(b.name)}</div></div>
   </div>
-  <button class="favoriteBtn ${favoriteNames.has(b.name)?'active':''}" onclick="toggleFavorite('${esc(b.name)}')">${favoriteNames.has(b.name)?'★ Favorited':'☆ Add to Favorites'}</button>
   <div class="stats">
    <div class="stat"><b>Hardness</b>${esc(String(h))}</div>
    <div class="stat"><b>Stack size</b>${esc(String(stack))}</div>
@@ -568,8 +554,7 @@ function renderAccount(message=''){
   const session=data.session;
   if(session){
    const email=esc(session.user.email||'');
-   c.innerHTML=`<div class="authBox"><h1>Your Blockpedia Account</h1><div class="accountCard"><p><b>Email</b></p><p>${email}</p><p style="color:#aaa">You are currently signed in.</p><h2 style="margin-top:22px">★ Favorites <span id="accountFavoriteCount" style="color:#888;font-size:13px;font-weight:normal"></span></h2><div id="accountFavorites" class="favoriteList">Loading favorites…</div><button class="btn" style="margin-top:14px" onclick="showBlocks()">Browse blocks</button> <button class="navbtn secondary" style="margin-top:14px" onclick="logoutAccount()">Log out</button></div></div>`;
-   loadFavorites().then(renderFavorites);
+   c.innerHTML=`<div class="authBox"><h1>Your Blockpedia Account</h1><div class="accountCard"><p><b>Email</b></p><p>${email}</p><p style="color:#aaa">You are currently signed in.</p><button class="btn" onclick="logoutAccount()">Log out</button></div></div>`;
   }else{
    c.innerHTML=`<div class="authBox"><h1>${authMode==='signup'?'Create your Blockpedia account':'Log in to Blockpedia'}</h1><p>${authMode==='signup'?'Create an account to use future personalized Blockpedia features.':'Log in to your existing Blockpedia account.'}</p><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" type="password" autocomplete="${authMode==='signup'?'new-password':'current-password'}" placeholder="Password"><button class="btn" onclick="${authMode==='signup'?'signupAccount':'loginAccount'}()">${authMode==='signup'?'Create account':'Log in'}</button><div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="authMode='${authMode==='signup'?'login':'signup'}';renderAccount()">${authMode==='signup'?'Already have an account? Log in':'Need an account? Sign up'}</button></p></div>`;
   }
@@ -589,98 +574,62 @@ async function loginAccount(){
  renderAccount(); updateAccountButton();
 }
 async function logoutAccount(){await supabaseClient.auth.signOut();renderAccount('You have been logged out.');updateAccountButton();}
-async function loadFavorites(){
- if(!supabaseClient){favoriteNames=new Set();favoritesLoaded=true;updateFavoriteCount();return;}
- const {data:sessionData}=await supabaseClient.auth.getSession();
- const session=sessionData.session;
- if(!session){favoriteNames=new Set();favoritesLoaded=true;updateFavoriteCount();return;}
- const {data,error}=await supabaseClient.from('favorites').select('block_name').eq('user_id',session.user.id).order('created_at',{ascending:false});
- if(error){console.warn('Favorites table unavailable:',error.message);favoriteNames=new Set();}
- else favoriteNames=new Set((data||[]).map(x=>x.block_name));
- favoritesLoaded=true;updateFavoriteCount();
-}
-
-async function toggleFavorite(name){
- if(!supabaseClient){alert('Connect Supabase first to use Favorites.');return;}
- const {data:sessionData}=await supabaseClient.auth.getSession();
- if(!sessionData.session){showAccount();return;}
- const userId=sessionData.session.user.id;
- if(favoriteNames.has(name)){
-  const {error}=await supabaseClient.from('favorites').delete().eq('user_id',userId).eq('block_name',name);
-  if(error){alert('Favorites are not set up yet in Supabase. Create the favorites table and policies first.');return;}
-  favoriteNames.delete(name);
- }else{
-  const {error}=await supabaseClient.from('favorites').insert({user_id:userId,block_name:name});
-  if(error){alert('Favorites are not set up yet in Supabase. Create the favorites table and policies first.');return;}
-  favoriteNames.add(name);
- }
- updateFavoriteCount();
- showDetail(name);
- if(currentView==='account')renderFavorites();
-}
-
-function updateFavoriteCount(){
- const el=$('favoriteCount');if(el)el.textContent=favoriteNames.size;
- const el2=$('accountFavoriteCount');if(el2)el2.textContent=`(${favoriteNames.size})`;
-}
-
-function renderFavorites(){
- const box=$('accountFavorites');if(!box)return;
- const names=[...favoriteNames];
- box.innerHTML=names.length?names.map(name=>`<div class="favoriteItem" onclick="showBlocks('${esc(name)}')"><b>${esc(pretty(name))}</b><div class="mini">minecraft:${esc(name)}</div></div>`).join(''):'<div style="color:#999">You have no favorites yet. Open a block and press ☆ Add to Favorites.</div>';
- updateFavoriteCount();
-}
-
-function showFavorites(){
- if(!supabaseClient){showAccount();return;}
- currentView='account';$('homeSide').classList.remove('active');
- document.querySelector('.wrap').style.display='none';$('accountPanel').style.display='block';
- supabaseClient.auth.getSession().then(({data})=>{if(data.session)renderAccount();else renderAccount('Log in to save and view favorites.');});
- window.scrollTo({top:0,behavior:'smooth'});
-}
-
 async function updateAccountButton(){
  if(!supabaseClient)return;
  const {data}=await supabaseClient.auth.getSession();
  const b=$('accountBtn'); if(b)b.textContent=data.session?'Account':'Log in';
 }
 function restoreMain(){document.querySelector('.wrap').style.display='grid';$('accountPanel').style.display='none';}
-async function load(){
+async function load(version=selectedVersion){
+ if(loadingVersion)return;
+ loadingVersion=true;
+ selectedVersion=VERSION_CONFIG[version]?version:'26.3';
+ setSourcesForVersion(selectedVersion);
+ const versionSelect=$('versionSelect');
+ if(versionSelect)versionSelect.value=selectedVersion;
+ const status=$('status');
+ if(status)status.textContent=`Loading Minecraft ${selectedVersion}…`;
  try{
   const [br,ir]=await Promise.all([fetch(SOURCES.blocks),fetch(SOURCES.items)]);
   if(!br.ok||!ir.ok)throw new Error('fetch failed');
-  blocks=await br.json();items=await ir.json();itemMap=Object.fromEntries(items.map(i=>[i.name,i]));
+  const versionBlocks=await br.json();
+  const versionItems=await ir.json();
+  blocks=versionBlocks;
+  items=versionItems;
+  itemMap=Object.fromEntries(items.map(i=>[i.name,i]));
  }catch(e){
+  console.warn(`Blockpedia could not load Minecraft ${selectedVersion}`,e);
   blocks=fallback;items=[];itemMap={};
  }
- if(supabaseClient){
+ if(supabaseClient&&!customContentLoaded){
   try{
    const [{data:customArticles},{data:customBlocks}]=await Promise.all([
     supabaseClient.from('custom_articles').select('*').order('created_at',{ascending:false}),
     supabaseClient.from('custom_blocks').select('*').order('created_at',{ascending:false})
    ]);
-   if(customArticles?.length){
-    articles.push(...customArticles.map(x=>({id:'custom-'+x.id,title:x.title,tag:x.tag,image:x.image,desc:x.description,content:x.content})));
-    customArticles.forEach(x=>{articleCopyCustom['custom-'+x.id]=x.content});
-   }
-   if(customBlocks?.length){
-    customBlocks.forEach(x=>{customBlockImages[x.name]=x.image_url});
-    blocks.push(...customBlocks.map(x=>({name:x.name,hardness:x.hardness??0,material:'custom',custom_obtain:x.obtain,custom_renewable:x.renewable,custom_description:x.description,custom_image:x.image_url,custom_category:x.category})));
-   }
+   customArticlesCache=(customArticles||[]).map(x=>({id:'custom-'+x.id,title:x.title,tag:x.tag,image:x.image,desc:x.description,content:x.content}));
+   customArticlesCache.forEach(x=>{articleCopyCustom[x.id]=x.content});
+   customBlocksCache=(customBlocks||[]).map(x=>({name:x.name,hardness:x.hardness??0,material:'custom',custom_obtain:x.obtain,custom_renewable:x.renewable,custom_description:x.description,custom_image:x.image_url,custom_category:x.category}));
+   customBlocksCache.forEach(x=>{customBlockImages[x.name]=x.custom_image});
+   if(customArticlesCache.length)articles.push(...customArticlesCache);
+   customContentLoaded=true;
   }catch(e){console.warn('Blockpedia custom content unavailable',e)}
  }
+ // Custom blocks are kept visible alongside the selected Minecraft version.
+ if(customBlocksCache.length)blocks=blocks.concat(customBlocksCache);
  const counts={All:0,Building:0,Natural:0,Ores:0,Wood:0,Decorative:0,Utility:0,Nether:0,End:0};
  blocks.forEach(b=>{counts.All++;cats(b).forEach(c=>{if(counts[c]!==undefined)counts[c]++})});
  const ids={All:'allCount',Building:'buildingCount',Natural:'naturalCount',Ores:'oreCount',Wood:'woodCount',Decorative:'decorCount',Utility:'utilityCount',Nether:'netherCount',End:'endCount'};
  Object.entries(ids).forEach(([k,id])=>{const el=$(id);if(el)el.textContent=counts[k]});
  document.querySelectorAll('.side button[data-cat]').forEach(x=>x.classList.remove('active'));
- home();
+ loadingVersion=false;
+ if(currentView==='blocks'){showBlocks();}else{home();}
 }
-
 const oldHome=home; home=function(anchor=''){restoreMain();oldHome(anchor)};
 const oldShowBlocks=showBlocks; showBlocks=function(openName=''){restoreMain();oldShowBlocks(openName)};
-if(supabaseClient){supabaseClient.auth.onAuthStateChange(()=>{updateAccountButton();loadFavorites();});updateAccountButton();loadFavorites();}
+if(supabaseClient){supabaseClient.auth.onAuthStateChange(()=>updateAccountButton());updateAccountButton();}
 
+$('versionSelect')?.addEventListener('change',e=>load(e.target.value));
 load();
 </script>
 </body>
