@@ -529,33 +529,97 @@ function renderGrid(){
  }).join(''):'<div class="empty">No blocks match that search.</div>';
 }
 
-function showDetail(name){
+function blockUses(b){
+ const n=b.name;
+ if(/_ore$|^ancient_debris$|^raw_/.test(n)) return 'Mining for resources and smelting or crafting the materials obtained from it.';
+ if(/_planks$|_log$|_wood$|_stem$|_hyphae$|_leaves$|_wool$|glass|concrete|terracotta|bricks?$|stone$|cobblestone|deepslate|blackstone|basalt|sandstone|prismarine/.test(n)) return 'Building, decoration and crafting into related building blocks.';
+ if(/_stairs$|_slab$|_wall$|_fence$|_door$|_trapdoor$|_button$|_pressure_plate$/.test(n)) return 'Building, decoration and useful building interactions such as entrances, paths or redstone components.';
+ if(/chest|barrel|shulker_box/.test(n)) return 'Storing items and organizing resources.';
+ if(/furnace|smoker|blast_furnace|crafting_table|anvil|stonecutter|smithing_table|grindstone|loom|cartography_table|brewing_stand/.test(n)) return 'Crafting, processing, upgrading or managing items.';
+ if(/redstone|piston|observer|hopper|dispenser|dropper|repeater|comparator|lever|torch/.test(n)) return 'Redstone circuits, automation and mechanisms.';
+ if(/bed$/.test(n)) return 'Sleeping, setting a spawn point and decorating builds.';
+ if(/door$|gate$|trapdoor$/.test(n)) return 'Entrances, exits, decoration and redstone-controlled builds.';
+ if(/torch|lantern|light/.test(n)) return 'Lighting areas and decorating builds.';
+ if(/portal|end_gateway/.test(n)) return 'Travel between dimensions or accessing special areas.';
+ return 'Building, decoration, crafting or gameplay depending on the block and its mechanics.';
+}
+
+function relatedBlocks(b){
+ const n=b.name;
+ let names=[];
+ if(/^(oak|spruce|birch|jungle|acacia|dark_oak|mangrove|cherry|bamboo|crimson|warped|pale_oak|poplar)/.test(n)){
+   const m=n.match(/^(oak|spruce|birch|jungle|acacia|dark_oak|mangrove|cherry|bamboo|crimson|warped|pale_oak|poplar)/)?.[1];
+   if(m) names=[`${m}_log`,`${m}_planks`,`${m}_leaves`,`${m}_stairs`,`${m}_slab`];
+ }
+ if(/_ore$/.test(n)) names=[n,'stone','deepslate',n.replace('_ore','')+'_block'];
+ if(/_stairs$/.test(n)) names=[n.replace('_stairs','_planks'),n.replace('_stairs','_slab'),n];
+ if(/_slab$/.test(n)) names=[n.replace('_slab','_stairs'),n.replace('_slab',''),n];
+ if(/_wall$/.test(n)) names=[n.replace('_wall',''),n.replace('_wall','_stairs'),n.replace('_wall','_slab')];
+ if(names.length<3 && isNetherBlock(b)) names=['netherrack','blackstone','basalt','nether_bricks','soul_sand'];
+ if(names.length<3 && isEndBlock(b)) names=['end_stone','end_stone_bricks','purpur_block','chorus_plant','end_rod'];
+ if(names.length<3) names=['stone','cobblestone','deepslate','dirt','sand'];
+ const unique=[]; for(const x of names){if(x!==n&&!unique.includes(x)&&blocks.some(b=>b.name===x))unique.push(x)}
+ return unique.slice(0,6);
+}
+
+function usefulGuide(b){
+ const n=b.name;
+ if(/_ore$|ancient_debris|diamond|emerald|gold|iron|coal|redstone|lapis|copper/.test(n)) return {id:'ore-hunting',title:'Ore Hunting Guide',desc:'Useful tips for finding and mining Minecraft ores.'};
+ if(isNetherBlock(b)) return {id:'nether-building',title:'Nether Building Guide',desc:'Explore Nether building materials and where to find them.'};
+ if(/_log$|_wood$|_planks$|_leaves$|_sapling$|_stairs$|_slab$/.test(n)) return {id:'wood-sets',title:'Wood Sets Guide',desc:'Learn how Minecraft wood families fit together.'};
+ if(/redstone|piston|observer|hopper|repeater|comparator|lever|button/.test(n)) return {id:'redstone-101',title:'Redstone 101',desc:'A quick introduction to redstone components and circuits.'};
+ return {id:'mining-basics',title:'Mining Basics',desc:'A useful guide to tools, hardness and efficient mining.'};
+}
+
+function blockUrl(name){
+ return `${location.origin}${location.pathname}?block=${encodeURIComponent(name)}`;
+}
+
+function openBlockUrl(name){
+ history.pushState({block:name},'',`?block=${encodeURIComponent(name)}`);
+ showDetail(name,false);
+}
+
+function showDetail(name,updateUrl=true){
  const b=blocks.find(x=>x.name===name);if(!b)return;
  addRecentlyViewed(b);
+ if(updateUrl){history.pushState({block:name},'',`?block=${encodeURIComponent(name)}`)}
  const stack=itemMap[b.name]?.stackSize??64, g=guide(b), h=b.hardness===-1?'Unbreakable':(b.hardness??'—');
  const states=b.states?.length?b.states.map(s=>`${s.name} (${s.num_values})`).join(', '):'None';
- $('detail').innerHTML=`<div class="detail-inner">
-  <button class="btn" onclick="closeDetail()" style="margin-bottom:11px">× Close</button>
+ const related=relatedBlocks(b).map(n=>blocks.find(x=>x.name===n)).filter(Boolean);
+ const guideInfo=usefulGuide(b);
+ $('detail').innerHTML=`<div class="detail-inner" id="block-page">
+  <div class="blockPageNav"><a href="?block=${encodeURIComponent(b.name)}#picture">Picture</a><a href="?block=${encodeURIComponent(b.name)}#recipe">Recipe</a><a href="?block=${encodeURIComponent(b.name)}#uses">Uses</a><a href="?block=${encodeURIComponent(b.name)}#find">Where to find</a><a href="?block=${encodeURIComponent(b.name)}#tool">Tool required</a><a href="?block=${encodeURIComponent(b.name)}#related">Related blocks</a><a href="?block=${encodeURIComponent(b.name)}#guide">Useful guide</a></div>
+  <button class="btn" onclick="history.back()" style="margin-bottom:11px">← Back</button>
   <div id="favoriteAction" style="margin-bottom:11px"></div>
-  <div class="detail-head">
-   <div class="bigthumb">${picture(b.name)}</div>
-   <div><h2>${esc(pretty(b.name))}</h2><div class="id">minecraft:${esc(b.name)}</div></div>
-  </div>
-  <div class="stats">
-   <div class="stat"><b>Hardness</b>${esc(String(h))}</div>
-   <div class="stat"><b>Stack size</b>${esc(String(stack))}</div>
-   <div class="stat"><b>Best tool</b>${esc(toolName(b))}</div>
-   <div class="stat"><b>Categories</b>${cats(b).map(c=>`<span class="tag">${esc(c)}</span>`).join('')}</div>
-   <div class="stat"><b>State IDs</b>${b.minStateId??'—'}–${b.maxStateId??'—'}</div>
-   <div class="stat"><b>States</b>${esc(String(states))}</div>
-  </div>
-  <div class="section"><h3>How to craft / obtain</h3><div class="box">${esc(g.craft)}</div></div>
-  <div class="section"><h3>Where to find it</h3><div class="box">${esc(g.find)}</div></div>
-  <div class="section"><h3>Renewability</h3><div class="box">${esc(g.renewable)}</div></div>
-  <div class="section"><h3>Full information</h3><div class="box"><a target="_blank" rel="noopener" href="${SOURCES.wiki+cleanName(b.name)}">Open the complete Minecraft Wiki article →</a></div></div>
+  <section id="picture"><div class="detail-head"><div class="bigthumb">${picture(b.name)}</div><div><h2>${esc(pretty(b.name))}</h2><div class="id">minecraft:${esc(b.name)}</div></div></div>
+  <div class="stats"><div class="stat"><b>Hardness</b>${esc(String(h))}</div><div class="stat"><b>Stack size</b>${esc(String(stack))}</div><div class="stat"><b>Best tool</b>${esc(toolName(b))}</div><div class="stat"><b>Categories</b>${cats(b).map(c=>`<span class="tag">${esc(c)}</span>`).join('')}</div><div class="stat"><b>State IDs</b>${b.minStateId??'—'}–${b.maxStateId??'—'}</div><div class="stat"><b>States</b>${esc(String(states))}</div></div></section>
+  <section id="recipe" class="blockPageSection"><h3>Recipe</h3><div class="box">${esc(g.craft)}</div></section>
+  <section id="uses" class="blockPageSection"><h3>Uses</h3><div class="box">${esc(blockUses(b))}</div></section>
+  <section id="find" class="blockPageSection"><h3>Where to find it</h3><div class="box">${esc(g.find)}</div></section>
+  <section id="tool" class="blockPageSection"><h3>Tool required</h3><div class="box">${esc(toolName(b))}</div></section>
+  <section id="related" class="blockPageSection"><h3>Related blocks</h3><div class="relatedGrid">${related.length?related.map(r=>`<div class="relatedBlock" onclick="openBlockUrl('${esc(r.name)}')"><div>${picture(r.name)}</div><b>${esc(pretty(r.name))}</b></div>`).join(''):'<div class="box">No closely related blocks found.</div>'}</div></section>
+  <section id="guide" class="blockPageSection"><h3>Useful guide</h3><a class="guideLink" href="?article=${encodeURIComponent(guideInfo.id)}"><b>${esc(guideInfo.title)}</b><br><span style="color:#aaa">${esc(guideInfo.desc)}</span></a></section>
+  <section class="blockPageSection"><h3>More information</h3><div class="box"><a target="_blank" rel="noopener" href="${SOURCES.wiki+cleanName(b.name)}">Open the complete Minecraft Wiki article →</a></div></section>
  </div>`;
  renderFavoriteAction(b.name);
+ setTimeout(()=>{if(location.hash)document.getElementById(location.hash.slice(1))?.scrollIntoView({behavior:'smooth'});},30);
 }
+
+function routeUrl(){
+ const p=new URLSearchParams(location.search);
+ const block=p.get('block');
+ const article=p.get('article');
+ if(block){
+   if(blocks.some(b=>b.name===block)){showBlocks();setTimeout(()=>showDetail(block,false),80)}
+   return;
+ }
+ if(article){const a=articles.find(x=>x.id===article);if(a){openArticle(article);return}}
+ if(currentView==='account')return;
+ home();
+}
+
+window.addEventListener('popstate',routeUrl);
 
 async function getSignedInUser(){
  if(!supabaseClient)return null;
@@ -767,6 +831,8 @@ if(supabaseClient){supabaseClient.auth.onAuthStateChange(async()=>{await loadFav
 
 $('versionSelect')?.addEventListener('change',e=>load(e.target.value));
 load();
+
+routeUrl();
 </script>
 </body>
 </html>
