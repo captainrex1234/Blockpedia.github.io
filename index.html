@@ -95,6 +95,7 @@ a{color:var(--blue)}
 @media(max-width:1160px){.wrap{grid-template-columns:205px minmax(0,1fr)}.detail{grid-column:1/-1;position:static}}
 @media(max-width:780px){.wrap{grid-template-columns:1fr}.side{display:none}.top{flex-wrap:wrap}.search{order:3;flex-basis:100%}.status{margin-left:0}.quick{grid-template-columns:1fr}.homeHero h1{font-size:32px}}
 .authBox{max-width:460px;margin:0 auto}.authBox h1{margin-top:0}.authBox input{width:100%;padding:11px;margin:7px 0 12px;background:#101010;color:#fff;border:2px solid #555;border-radius:3px}.authMsg{margin:10px 0;color:#e5c65a}.accountCard{background:#292929;border:2px solid #484848;padding:18px}
+.favoriteBtn{margin-top:10px;background:#383838;border:2px solid #555;color:#fff;border-radius:3px;padding:8px 11px;font-weight:800;cursor:pointer}.favoriteBtn:hover{background:#4a4a4a}.favoriteBtn.active{background:#5a4d20;border-color:#d9bd55;color:#ffe58a}.favoriteList{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:12px}.favoriteItem{background:#181818;border:1px solid #454545;padding:10px;cursor:pointer}.favoriteItem:hover{border-color:var(--green2)}
 </style>
 </head>
 <body>
@@ -117,6 +118,7 @@ a{color:var(--blue)}
     <button id="homeSide" onclick="home()">Home</button>
     <button id="articlesSide" onclick="home('articles')">Featured Articles</button>
     <button onclick="showBlocks()">All Blocks</button>
+    <button onclick="showFavorites()">Favorites <span id="favoriteCount" class="count">—</span></button>
 
     <h3 style="margin-top:18px">BLOCK INDEX</h3>
     <button data-cat="All">All blocks <span id="allCount" class="count">—</span></button>
@@ -159,6 +161,7 @@ const SOURCES = {
 };
 
 let blocks=[], items=[], itemMap={}, currentCat='All', includeTechnical=false;
+let favoriteNames=new Set(), favoritesLoaded=false;
 let currentView='home';
 
 const fallback=[
@@ -479,6 +482,7 @@ function showDetail(name){
    <div class="bigthumb">${picture(b.name)}</div>
    <div><h2>${esc(pretty(b.name))}</h2><div class="id">minecraft:${esc(b.name)}</div></div>
   </div>
+  <button class="favoriteBtn ${favoriteNames.has(b.name)?'active':''}" onclick="toggleFavorite('${esc(b.name)}')">${favoriteNames.has(b.name)?'★ Favorited':'☆ Add to Favorites'}</button>
   <div class="stats">
    <div class="stat"><b>Hardness</b>${esc(String(h))}</div>
    <div class="stat"><b>Stack size</b>${esc(String(stack))}</div>
@@ -531,7 +535,8 @@ function renderAccount(message=''){
   const session=data.session;
   if(session){
    const email=esc(session.user.email||'');
-   c.innerHTML=`<div class="authBox"><h1>Your Blockpedia Account</h1><div class="accountCard"><p><b>Email</b></p><p>${email}</p><p style="color:#aaa">You are currently signed in.</p><button class="btn" onclick="logoutAccount()">Log out</button></div></div>`;
+   c.innerHTML=`<div class="authBox"><h1>Your Blockpedia Account</h1><div class="accountCard"><p><b>Email</b></p><p>${email}</p><p style="color:#aaa">You are currently signed in.</p><h2 style="margin-top:22px">★ Favorites <span id="accountFavoriteCount" style="color:#888;font-size:13px;font-weight:normal"></span></h2><div id="accountFavorites" class="favoriteList">Loading favorites…</div><button class="btn" style="margin-top:14px" onclick="showBlocks()">Browse blocks</button> <button class="navbtn secondary" style="margin-top:14px" onclick="logoutAccount()">Log out</button></div></div>`;
+   loadFavorites().then(renderFavorites);
   }else{
    c.innerHTML=`<div class="authBox"><h1>${authMode==='signup'?'Create your Blockpedia account':'Log in to Blockpedia'}</h1><p>${authMode==='signup'?'Create an account to use future personalized Blockpedia features.':'Log in to your existing Blockpedia account.'}</p><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" type="password" autocomplete="${authMode==='signup'?'new-password':'current-password'}" placeholder="Password"><button class="btn" onclick="${authMode==='signup'?'signupAccount':'loginAccount'}()">${authMode==='signup'?'Create account':'Log in'}</button><div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="authMode='${authMode==='signup'?'login':'signup'}';renderAccount()">${authMode==='signup'?'Already have an account? Log in':'Need an account? Sign up'}</button></p></div>`;
   }
@@ -551,6 +556,56 @@ async function loginAccount(){
  renderAccount(); updateAccountButton();
 }
 async function logoutAccount(){await supabaseClient.auth.signOut();renderAccount('You have been logged out.');updateAccountButton();}
+async function loadFavorites(){
+ if(!supabaseClient){favoriteNames=new Set();favoritesLoaded=true;updateFavoriteCount();return;}
+ const {data:sessionData}=await supabaseClient.auth.getSession();
+ const session=sessionData.session;
+ if(!session){favoriteNames=new Set();favoritesLoaded=true;updateFavoriteCount();return;}
+ const {data,error}=await supabaseClient.from('favorites').select('block_name').eq('user_id',session.user.id).order('created_at',{ascending:false});
+ if(error){console.warn('Favorites table unavailable:',error.message);favoriteNames=new Set();}
+ else favoriteNames=new Set((data||[]).map(x=>x.block_name));
+ favoritesLoaded=true;updateFavoriteCount();
+}
+
+async function toggleFavorite(name){
+ if(!supabaseClient){alert('Connect Supabase first to use Favorites.');return;}
+ const {data:sessionData}=await supabaseClient.auth.getSession();
+ if(!sessionData.session){showAccount();return;}
+ const userId=sessionData.session.user.id;
+ if(favoriteNames.has(name)){
+  const {error}=await supabaseClient.from('favorites').delete().eq('user_id',userId).eq('block_name',name);
+  if(error){alert('Favorites are not set up yet in Supabase. Create the favorites table and policies first.');return;}
+  favoriteNames.delete(name);
+ }else{
+  const {error}=await supabaseClient.from('favorites').insert({user_id:userId,block_name:name});
+  if(error){alert('Favorites are not set up yet in Supabase. Create the favorites table and policies first.');return;}
+  favoriteNames.add(name);
+ }
+ updateFavoriteCount();
+ showDetail(name);
+ if(currentView==='account')renderFavorites();
+}
+
+function updateFavoriteCount(){
+ const el=$('favoriteCount');if(el)el.textContent=favoriteNames.size;
+ const el2=$('accountFavoriteCount');if(el2)el2.textContent=`(${favoriteNames.size})`;
+}
+
+function renderFavorites(){
+ const box=$('accountFavorites');if(!box)return;
+ const names=[...favoriteNames];
+ box.innerHTML=names.length?names.map(name=>`<div class="favoriteItem" onclick="showBlocks('${esc(name)}')"><b>${esc(pretty(name))}</b><div class="mini">minecraft:${esc(name)}</div></div>`).join(''):'<div style="color:#999">You have no favorites yet. Open a block and press ☆ Add to Favorites.</div>';
+ updateFavoriteCount();
+}
+
+function showFavorites(){
+ if(!supabaseClient){showAccount();return;}
+ currentView='account';$('homeSide').classList.remove('active');
+ document.querySelector('.wrap').style.display='none';$('accountPanel').style.display='block';
+ supabaseClient.auth.getSession().then(({data})=>{if(data.session)renderAccount();else renderAccount('Log in to save and view favorites.');});
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+
 async function updateAccountButton(){
  if(!supabaseClient)return;
  const {data}=await supabaseClient.auth.getSession();
@@ -591,7 +646,7 @@ async function load(){
 
 const oldHome=home; home=function(anchor=''){restoreMain();oldHome(anchor)};
 const oldShowBlocks=showBlocks; showBlocks=function(openName=''){restoreMain();oldShowBlocks(openName)};
-if(supabaseClient){supabaseClient.auth.onAuthStateChange(()=>updateAccountButton());updateAccountButton();}
+if(supabaseClient){supabaseClient.auth.onAuthStateChange(()=>{updateAccountButton();loadFavorites();});updateAccountButton();loadFavorites();}
 
 load();
 </script>
