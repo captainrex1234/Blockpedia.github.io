@@ -755,10 +755,60 @@ function renderAccount(message=''){
    const recent=getRecentlyViewed(session.user);
    c.innerHTML=`<div class="authBox"><h1>Account Dashboard</h1><div class="accountCard"><p><b>Email</b></p><p>${email}</p><p><b>Account created</b></p><p>${createdDate}</p><p style="color:#aaa">You are currently signed in.</p><button class="btn" onclick="logoutAccount()">Log out</button></div><div class="dashboardGrid"><div class="dashboardCard"><h3>⭐ Favorites</h3><p>${favoriteNames.size} saved block${favoriteNames.size===1?'':'s'}.</p><button class="navbtn secondary" onclick="showFavorites()">View Favorites</button></div><div class="dashboardCard"><h3>🕘 Recently Viewed</h3><p>${recent.length} recent block${recent.length===1?'':'s'}.</p>${recent.length?`<div class="recentList">${recent.map(recentCard).join('')}</div><button class="navbtn secondary clearRecent" onclick="clearRecentlyViewed()">Clear recently viewed</button>`:'<p style="color:#aaa">Blocks you open will appear here.</p>'}</div></div><div id="authMsg" class="authMsg">${esc(message)}</div></div>`;
   }else{
-   c.innerHTML=`<div class="authBox"><h1>${authMode==='signup'?'Create your Blockpedia account':'Log in to Blockpedia'}</h1><p>${authMode==='signup'?'Create an account to use personalized Blockpedia features.':'Log in to your existing Blockpedia account.'}</p><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" type="password" autocomplete="${authMode==='signup'?'new-password':'current-password'}" placeholder="Password"><button class="btn" onclick="${authMode==='signup'?'signupAccount':'loginAccount'}()">${authMode==='signup'?'Create account':'Log in'}</button><div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="authMode='${authMode==='signup'?'login':'signup'}';renderAccount()">${authMode==='signup'?'Already have an account? Log in':'Need an account? Sign up'}</button></p></div>`;
+   c.innerHTML=`<div class="authBox"><h1>${authMode==='signup'?'Create your Blockpedia account':'Log in to Blockpedia'}</h1><p>${authMode==='signup'?'Create an account to use personalized Blockpedia features.':'Log in to your existing Blockpedia account.'}</p><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" type="password" autocomplete="${authMode==='signup'?'new-password':'current-password'}" placeholder="Password"><button class="btn" onclick="${authMode==='signup'?'signupAccount':'loginAccount'}()">${authMode==='signup'?'Create account':'Log in'}</button>${authMode==='login'?'<p><button class="navbtn secondary" onclick="showForgotPassword()">Forgot password?</button></p>':''}<div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="authMode='${authMode==='signup'?'login':'signup'}';renderAccount()">${authMode==='signup'?'Already have an account? Log in':'Need an account? Sign up'}</button></p></div>`;
   }
  });
 }
+let forgotEmail='';
+let forgotExpiresAt=0;
+let forgotTimer=null;
+function showForgotPassword(message=''){
+ const c=$('accountContent');
+ c.innerHTML=`<div class="authBox"><h1>Forgot your password?</h1><p>Enter your Blockpedia account email. We'll send a verification code that expires in 5 minutes.</p><label>Email</label><input id="forgotEmail" type="email" autocomplete="email" placeholder="you@example.com" value="${esc(forgotEmail)}"><button class="btn" onclick="sendPasswordCode()">Send verification code</button><div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="renderAccount()">Back to log in</button></p></div>`;
+}
+async function sendPasswordCode(){
+ const email=$('forgotEmail').value.trim().toLowerCase();
+ if(!email){showForgotPassword('Enter your account email.');return;}
+ const {error}=await supabaseClient.auth.signInWithOtp({email,options:{shouldCreateUser:false}});
+ if(error){showForgotPassword(error.message);return;}
+ forgotEmail=email;
+ forgotExpiresAt=Date.now()+5*60*1000;
+ showPasswordCodeForm();
+}
+function showPasswordCodeForm(message=''){
+ const c=$('accountContent');
+ c.innerHTML=`<div class="authBox"><h1>Enter verification code</h1><p>We sent a verification code to <b>${esc(forgotEmail)}</b>.</p><p><b>Code expires in <span id="forgotCountdown">5:00</span></b></p><label>Verification code</label><input id="forgotCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"><label>New password</label><input id="forgotNewPassword" type="password" autocomplete="new-password" placeholder="New password"><button class="btn" onclick="verifyPasswordCode()">Reset password</button><div id="authMsg" class="authMsg">${esc(message)}</div><p><button class="navbtn secondary" onclick="showForgotPassword()">Send a new code</button></p></div>`;
+ startForgotCountdown();
+}
+function startForgotCountdown(){
+ if(forgotTimer)clearInterval(forgotTimer);
+ const tick=()=>{
+  const el=$('forgotCountdown');
+  const remaining=Math.max(0,forgotExpiresAt-Date.now());
+  const total=Math.ceil(remaining/1000);
+  if(el)el.textContent=`${Math.floor(total/60)}:${String(total%60).padStart(2,'0')}`;
+  if(remaining<=0){clearInterval(forgotTimer);forgotTimer=null;if(el)el.textContent='expired';}
+ };
+ tick(); forgotTimer=setInterval(tick,250);
+}
+async function verifyPasswordCode(){
+ if(Date.now()>=forgotExpiresAt){showPasswordCodeForm('This verification code has expired. Please send a new one.');return;}
+ const code=$('forgotCode').value.trim();
+ const password=$('forgotNewPassword').value;
+ if(!/^\d{6}$/.test(code)){showPasswordCodeForm('Enter the 6-digit verification code.');return;}
+ if(password.length<6){showPasswordCodeForm('Your new password must be at least 6 characters.');return;}
+ const {error:verifyError}=await supabaseClient.auth.verifyOtp({email:forgotEmail,token:code,type:'email'});
+ if(verifyError){showPasswordCodeForm(verifyError.message);return;}
+ const {error:updateError}=await supabaseClient.auth.updateUser({password});
+ if(updateError){showPasswordCodeForm(updateError.message);return;}
+ if(forgotTimer)clearInterval(forgotTimer);
+ forgotTimer=null; forgotEmail=''; forgotExpiresAt=0;
+ favoriteNames=new Set();favoriteLoadedUserId=null;
+ await loadFavorites();
+ renderAccount('Password changed successfully. You are now signed in.');
+ updateAccountButton();
+}
+
 async function signupAccount(){
  const email=$('authEmail').value.trim(), password=$('authPassword').value;
  if(!email||!password){renderAccount('Enter an email and password.');return;}
