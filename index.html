@@ -392,7 +392,15 @@ const articles=[
  {id:'wood-sets',title:'Wood Sets',tag:'Building',image:'oak_log',desc:'A quick tour of logs, planks, leaves, slabs, stairs, fences, doors and more.'},
  {id:'nether-building',title:'Building in the Nether',tag:'Nether',image:'netherrack',desc:'Key Nether building blocks and where to get them.'},
  {id:'redstone-101',title:'Redstone 101',tag:'Technical',image:'redstone_block',desc:'Start exploring redstone components and useful block properties.'},
- {id:'new-in-263',title:'What’s New in 26.3',tag:'Update',image:'poplar_leaves',desc:'New Wilderness Bound content, including Poplar wood and colorful leaves.'}
+ {id:'new-in-263',title:'What’s New in 26.3',tag:'Update',image:'poplar_leaves',desc:'New Wilderness Bound content, including Poplar wood and colorful leaves.'},
+ {id:'end-building',title:'Building in the End',tag:'End',image:'end_stone',desc:'Explore End stone, purpur, chorus blocks and other materials for End-themed builds.'},
+ {id:'lighting-guide',title:'Lighting Guide',tag:'Guide',image:'lantern',desc:'Learn about common light-emitting blocks and how to use them in builds.'},
+ {id:'stone-family',title:'The Stone Family',tag:'Building',image:'stone_bricks',desc:'Compare stone, cobblestone, deepslate and their many building variants.'},
+ {id:'storage-blocks',title:'Storage Blocks',tag:'Utility',image:'chest',desc:'A quick reference to chests, barrels, shulker boxes and other useful storage blocks.'},
+ {id:'farming-blocks',title:'Farming Blocks',tag:'Survival',image:'farmland',desc:'Learn which blocks are important for growing crops and building simple farms.'},
+ {id:'survival-shelter',title:'Your First Shelter',tag:'Survival',image:'oak_planks',desc:'A simple guide to choosing materials for a safe and practical first base.'},
+ {id:'building-with-glass',title:'Building with Glass',tag:'Building',image:'glass',desc:'Tips for using glass, panes and related transparent blocks in builds.'},
+ {id:'transport-blocks',title:'Transport & Movement',tag:'Utility',image:'rail',desc:'Discover rails, powered rails, ice and other blocks that help you move around your world.'}
 ];
 
 function articleView(a){
@@ -402,7 +410,15 @@ function articleView(a){
   'wood-sets':['oak_log','oak_planks','oak_leaves','oak_stairs','oak_slab'],
   'nether-building':['netherrack','basalt','blackstone','nether_bricks','soul_sand'],
   'redstone-101':['redstone_block','redstone_torch','piston','observer','hopper'],
-  'new-in-263':['poplar_log','poplar_planks','red_poplar_leaves','orange_poplar_leaves','yellow_poplar_leaves','wool_stairs','white_concrete_stairs']
+  'new-in-263':['poplar_log','poplar_planks','red_poplar_leaves','orange_poplar_leaves','yellow_poplar_leaves','wool_stairs','white_concrete_stairs'],
+  'end-building':['end_stone','end_stone_bricks','purpur_block','purpur_pillar','end_rod','chorus_flower'],
+  'lighting-guide':['torch','lantern','soul_lantern','glowstone','sea_lantern','shroomlight'],
+  'stone-family':['stone','cobblestone','stone_bricks','deepslate','cobbled_deepslate','polished_deepslate'],
+  'storage-blocks':['chest','trapped_chest','barrel','ender_chest','shulker_box'],
+  'farming-blocks':['farmland','dirt','grass_block','water','composter','hay_block'],
+  'survival-shelter':['oak_planks','cobblestone','glass','door','torch','crafting_table'],
+  'building-with-glass':['glass','glass_pane','white_stained_glass','white_stained_glass_pane','tinted_glass'],
+  'transport-blocks':['rail','powered_rail','detector_rail','activator_rail','ice','packed_ice','blue_ice']
  }[a.id]||[];
  return `<div class="panel articlePage">
    <button class="btn back" onclick="home('articles')">← Back to articles</button>
@@ -427,8 +443,24 @@ function articleCopy(id){
    <h2>Where to look</h2><p>Use the site's Nether category to browse related blocks, then open a block to see its source and a link to its complete Wiki article.</p>`,
   'redstone-101':`<p>Redstone components let blocks respond to power, signals and player interactions. This encyclopedia includes common redstone-related blocks in the Utility category.</p>
    <h2>Start simple</h2><p>Learn one component at a time, then combine components into circuits. The block entries provide the quick reference information, while the linked Wiki pages provide the deeper mechanics.</p>`,
-  'new-in-263':`<p>Minecraft Java Edition 26.3 is the <i>Wilderness Bound</i> release. It added the Dappled Forest biome, Poplar trees, fallen Poplar trees, new colored Poplar leaves, a Poplar wood set, Shelf Mushrooms, Red Shrubs, Abandoned Camps, Explorer Maps, Cushions, Straw Beds, Wool stairs/slabs and Concrete stairs/slabs. citeturn960204search0</p>
-   <h2>Poplar wood</h2><p>The new Poplar tree has red, orange and yellow leaf variants, while Poplar Leaves can drop Poplar Saplings that may grow into any of the three variants. citeturn960204search0</p>`
+  'new-in-263':`<p>Minecraft Java Edition 26.3 is the <i>Wilderness Bound</i> release. It added the Dappled Forest biome, Poplar trees, fallen Poplar trees, new colored Poplar leaves, a Poplar wood set, Shelf Mushrooms, Red Shrubs, Abandoned Camps, Explorer Maps, Cushions, Straw Beds, Wool stairs/slabs and Concrete stairs/slabs.</p>
+   <h2>Poplar wood</h2><p>The new Poplar tree has red, orange and yellow leaf variants, while Poplar Leaves can drop Poplar Saplings that may grow into any of the three variants.</p>`,
+  'end-building':`<p>The End has a distinctive building palette. End stone gives builds a pale, ancient-looking foundation, while purpur blocks add a purple accent.</p>
+   <h2>Useful materials</h2><p>End stone bricks work well for walls and floors, purpur pillars add vertical detail, and End rods can provide both lighting and decoration. Chorus blocks can also help create unusual organic-looking structures.</p>`,
+  'lighting-guide':`<p>Good lighting makes a build easier to navigate and can change its atmosphere. Torches are simple and inexpensive, while lanterns work especially well on ceilings, walls and chains.</p>
+   <h2>Choosing a light</h2><ul><li>Use torches for quick early-game lighting.</li><li>Use lanterns when you want a more decorative look.</li><li>Glowstone, sea lanterns and shroomlights can provide bright lighting that fits different build styles.</li></ul>`,
+  'stone-family':`<p>Stone and its related blocks form one of Minecraft's biggest building families. You can mix natural blocks with crafted variants to add texture without changing the main material.</p>
+   <h2>Mixing textures</h2><p>Stone, cobblestone and stone bricks make a classic combination. Deepslate and its polished variants can create a darker palette for underground bases, castles and modern builds.</p>`,
+  'storage-blocks':`<p>Storage blocks help keep items organised as your world grows. Chests and barrels are common early-game choices, while Ender Chests and Shulker Boxes become especially useful for portable or shared storage systems.</p>
+   <h2>Organisation tips</h2><p>Group related items together and leave spare space for future materials. Barrels can fit neatly into walls, while double chests provide a large amount of accessible storage.</p>`,
+  'farming-blocks':`<p>Farming starts with a few simple blocks. Farmland provides a place for many crops to grow, while water can keep nearby farmland hydrated.</p>
+   <h2>Useful supporting blocks</h2><p>Composters can be used with plant-based items, and hay blocks are useful for storing large amounts of wheat. Build your farm around the crop and mechanics you want to use.</p>`,
+  'survival-shelter':`<p>A first shelter does not need to be complicated. Choose easy-to-obtain blocks such as wood and cobblestone, add a door, and light the area so you can work safely.</p>
+   <h2>Build for expansion</h2><p>Leave room for storage, crafting and future additions. A small starter house can later become the centre of a much larger base.</p>`,
+  'building-with-glass':`<p>Glass is useful when you want windows, skylights or enclosed spaces without blocking the view. Glass panes use less material for many window designs and have a different shape from full glass blocks.</p>
+   <h2>Design ideas</h2><p>Use clear glass for open views and stained glass for colour. Tinted glass can be useful when you want a darker transparent effect while keeping the block visually distinct.</p>`,
+  'transport-blocks':`<p>Minecraft has several blocks that can help players and minecarts move around. Rails form the basic track, while powered rails can provide extra movement for minecarts.</p>
+   <h2>Other movement options</h2><p>Ice variants can be useful for specialised travel systems, especially when combined with boats. Choose a transport method based on the distance, terrain and resources available in your world.</p>`
  };
  return copy[id]||'<p>Article coming soon.</p>';
 }
